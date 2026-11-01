@@ -46,8 +46,12 @@ document.body.style.background = "transparent";
 
 /* Linux：WebKitGTK 的窗口透明在部分显卡/驱动（虚拟机 vmwgfx 等）上不可用，
    透明背景会渲染成整块灰/黑阴影。Linux 一律用实色底（悬浮栏形态），
-   显示效果在任何机器上都确定；Windows 保持纯悬浮文字形态不变 */
-const IS_LINUX = !/windows/i.test(navigator.userAgent);
+   显示效果在任何机器上都确定；Windows/macOS 保持纯悬浮文字形态不变
+   （macOS 的透明依赖 tauri 的 macos-private-api 特性，后端已开） */
+const UA = navigator.userAgent;
+const IS_WINDOWS = /windows/i.test(UA);
+const IS_MACOS = /macintosh|mac os x/i.test(UA);
+const IS_LINUX = !IS_WINDOWS && !IS_MACOS;
 // 虚拟机（后端已禁用 WebKit 合成）走透明悬浮形态：URL 带 transparent=1
 const TRANSPARENT =
   !IS_LINUX || new URLSearchParams(location.search).get("transparent") === "1";

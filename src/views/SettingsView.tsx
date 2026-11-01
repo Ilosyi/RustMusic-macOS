@@ -27,6 +27,7 @@ import {
   saveCustomAccentHex,
 } from "../theme";
 import { showUpdateDialog } from "../components/UpdateDialog";
+import { isMacOS } from "../utils";
 
 const EQ_FREQS = ["31", "62", "125", "250", "500", "1k", "2k", "4k", "8k", "16k"];
 
@@ -261,7 +262,7 @@ export default function SettingsView() {
             <div className="flex items-center gap-1.5">
               {(
                 [
-                  { key: "tray", label: "最小化到托盘" },
+                  { key: "tray", label: isMacOS() ? "最小化到菜单栏" : "最小化到托盘" },
                   { key: "exit", label: "直接退出应用" },
                 ] as const
               ).map((o) => (
@@ -283,7 +284,9 @@ export default function SettingsView() {
             </div>
           </div>
           <p className="text-[11.5px] text-[var(--ink-3)] mt-2">
-            最小化到托盘后音乐继续播放，从任务栏托盘图标可重新打开主界面或完全退出。
+            {isMacOS()
+              ? "隐藏后音乐继续播放：点 Dock 图标或菜单栏图标可重新打开主界面，⌘Q 完全退出。"
+              : "最小化到托盘后音乐继续播放，从任务栏托盘图标可重新打开主界面或完全退出。"}
           </p>
         </section>
 
@@ -802,10 +805,10 @@ export default function SettingsView() {
                     api.openFolder(target).catch((e) => useStore.getState().toast(String(e), "error"));
                   }
                 }}
-                title="在资源管理器中显示"
+                title={isMacOS() ? "在访达中显示" : "在资源管理器中显示"}
               >
                 <FolderOpen size={13} />
-                在资源管理器中显示
+                {isMacOS() ? "在访达中显示" : "在资源管理器中显示"}
               </button>
               <button className="btn-secondary !py-1.5 !px-3" onClick={pickSaveDir}>
                 更改目录
@@ -902,13 +905,15 @@ export default function SettingsView() {
             </span>
           </div>
           <p className="text-[11.5px] text-[var(--ink-3)] mt-2">
-            发现新版本时会展示更新说明，确认后自动下载并原地安装（不改变安装位置），完成后自动重启应用。
+            {isMacOS()
+              ? "发现新版本时会展示更新说明，确认后打开 GitHub 发布页下载 dmg 手动安装（macOS 版不内置自动安装）。"
+              : "发现新版本时会展示更新说明，确认后自动下载并原地安装（不改变安装位置），完成后自动重启应用。"}
           </p>
         </section>
 
         <div className="text-[11.5px] text-[var(--ink-3)] px-1 pb-2">
           RustMusic {appVersion ? `v${appVersion}` : ""} · Rust + Tauri 2 + React ·
-          引擎 rodio / symphonia · 界面支持 Windows / Linux（WASAPI 独占输出仅 Windows）
+          引擎 rodio / symphonia · 界面支持 Windows / macOS / Linux（WASAPI 独占输出仅 Windows）
         </div>
       </div>
     </div>

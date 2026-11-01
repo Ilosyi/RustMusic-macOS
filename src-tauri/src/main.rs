@@ -172,6 +172,52 @@ fn main() {
                     let _ = main.set_focus();
                 }
             }
+            // macOS：系统菜单栏是 WebView 编辑快捷键的来源——没有 Edit 菜单时
+            // ⌘C/⌘V/⌘A/⌘Z 在输入框里全部失效，⌘Q/⌘W/⌘H 也无从派发。
+            // 不用 Menu::default()：它内置英文文案，与中文界面割裂；这里按
+            // AppKit 约定手工拼一套中文菜单（predefined 项保证行为交给系统）
+            #[cfg(target_os = "macos")]
+            {
+                use tauri::menu::{MenuBuilder, PredefinedMenuItem, SubmenuBuilder};
+                let h = app.handle();
+                let sep = || PredefinedMenuItem::separator(h);
+                let app_menu = SubmenuBuilder::new(h, "RustMusic")
+                    .item(&PredefinedMenuItem::about(h, Some("关于 RustMusic"), None)?)
+                    .item(&sep()?)
+                    .item(&PredefinedMenuItem::services(h, Some("服务"))?)
+                    .item(&sep()?)
+                    .item(&PredefinedMenuItem::hide(h, Some("隐藏 RustMusic"))?)
+                    .item(&PredefinedMenuItem::hide_others(h, Some("隐藏其他"))?)
+                    .item(&PredefinedMenuItem::show_all(h, Some("全部显示"))?)
+                    .item(&sep()?)
+                    .item(&PredefinedMenuItem::quit(h, Some("退出 RustMusic"))?)
+                    .build()?;
+                let file_menu = SubmenuBuilder::new(h, "文件")
+                    .item(&PredefinedMenuItem::close_window(h, Some("关闭窗口"))?)
+                    .build()?;
+                let edit_menu = SubmenuBuilder::new(h, "编辑")
+                    .item(&PredefinedMenuItem::undo(h, Some("撤销"))?)
+                    .item(&PredefinedMenuItem::redo(h, Some("重做"))?)
+                    .item(&sep()?)
+                    .item(&PredefinedMenuItem::cut(h, Some("剪切"))?)
+                    .item(&PredefinedMenuItem::copy(h, Some("复制"))?)
+                    .item(&PredefinedMenuItem::paste(h, Some("粘贴"))?)
+                    .item(&PredefinedMenuItem::select_all(h, Some("全选"))?)
+                    .build()?;
+                let view_menu = SubmenuBuilder::new(h, "显示")
+                    .item(&PredefinedMenuItem::fullscreen(h, Some("进入全屏"))?)
+                    .build()?;
+                let window_menu = SubmenuBuilder::new(h, "窗口")
+                    .item(&PredefinedMenuItem::minimize(h, Some("最小化"))?)
+                    .item(&PredefinedMenuItem::maximize(h, Some("缩放"))?)
+                    .item(&sep()?)
+                    .item(&PredefinedMenuItem::bring_all_to_front(h, Some("前置全部窗口"))?)
+                    .build()?;
+                let menu = MenuBuilder::new(h)
+                    .items(&[&app_menu, &file_menu, &edit_menu, &view_menu, &window_menu])
+                    .build()?;
+                app.set_menu(menu)?;
+            }
             // 无框窗口关掉 DWM 边框后 Win11 会失去圆角，这里单独设回圆角
             //（DWMWA_WINDOW_CORNER_PREFERENCE = ROUND；Win10 无此属性，静默忽略）
             #[cfg(windows)]
@@ -459,6 +505,15 @@ fn main() {
             commands::set_auto_update,
             commands::open_url,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app_handle, event| {
+            // macOS：关闭主窗口是"隐藏到菜单栏"，此时点 Dock 图标系统只发
+            // Reopen（没有可见窗口），不接管就成了"点图标毫无反应"
+            #[cfg(target_os = "macos")]
+            if let tauri::RunEvent::Reopen { .. } = event {
+                webview_suspend::show_main(app_handle);
+            }
+            let _ = (app_handle, event);
+        });
 }

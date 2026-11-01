@@ -1,5 +1,17 @@
 import type { LyricsPayload, LyricLine, TrackMeta } from "./types";
 
+/**
+ * 当前运行平台是否为 macOS。
+ * 读 documentElement.dataset.platform（main.tsx 渲染前按 UA 写入），
+ * 必须是函数而非模块级常量：模块求值早于 main.tsx 里的赋值。
+ */
+export function isMacOS(): boolean {
+  return (
+    typeof document !== "undefined" &&
+    document.documentElement.dataset.platform === "macos"
+  );
+}
+
 /** 当前播放位置对应的歌词行（无同步歌词返回 null） */
 export function fmtTime(ms: number): string {
   if (!isFinite(ms) || ms <= 0) return "0:00";

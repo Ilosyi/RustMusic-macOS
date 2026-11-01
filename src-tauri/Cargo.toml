@@ -18,11 +18,13 @@ custom-protocol = ["tauri/custom-protocol"]
 tauri-build = { version = "~2.6", features = [] }
 
 [dependencies]
-tauri = { version = "~2.11", features = ["tray-icon", "protocol-asset"] }
+# macos-private-api：桌面歌词窗口在 macOS 上只有走私有 API 才能真正透明
+#（wry 的透明窗口实现，其它平台忽略该特性，零影响）
+tauri = { version = "~2.11", features = ["tray-icon", "protocol-asset", "macos-private-api", "image-png"] }
 tauri-plugin-dialog = "~2.7"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-rodio = { version = "0.22", default-features = false, features = ["playback", "symphonia-mp3", "symphonia-aac", "symphonia-isomp4", "symphonia-vorbis", "symphonia-wav", "flac"] }
+rodio = { version = "0.22", default-features = false, features = ["playback", "symphonia-mp3", "symphonia-aac", "symphonia-isomp4", "vorbis", "wav", "flac"] }
 lofty = "0.22"
 rusqlite = { version = "0.32", features = ["bundled"] }
 walkdir = "2"
@@ -70,6 +72,10 @@ keyring = { version = "~3.6", default-features = false, features = ["windows-nat
 
 [target.'cfg(target_os = "linux")'.dependencies]
 keyring = { version = "~3.6", default-features = false, features = ["sync-secret-service", "crypto-rust"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+# 凭据管理：macOS 走钥匙串（Keychain），apple-native 是唯一可用后端
+keyring = { version = "~3.6", default-features = false, features = ["apple-native"] }
 
 [dev-dependencies]
 

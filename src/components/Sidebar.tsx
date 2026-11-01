@@ -25,7 +25,7 @@ import Logo from "./Logo";
 import SkinPicker from "./SkinPicker";
 import { ConfirmModal, InputModal } from "./Dialogs";
 import CoverImg from "./CoverImg";
-import { clampMenuPos } from "../utils";
+import { clampMenuPos, isMacOS } from "../utils";
 import { useDragList } from "../hooks/useDragList";
 import type { ViewName } from "../types";
 
@@ -88,7 +88,11 @@ export default function Sidebar() {
   const mins = Math.floor((totalDuration % 3600) / 60);
 
   return (
-    <aside className="w-[236px] shrink-0 flex flex-col px-4 pt-3 relative z-20">
+    <aside
+      className="w-[236px] shrink-0 flex flex-col px-4 pt-3 relative z-20"
+      // macOS 用原生 Overlay 标题栏：红绿灯浮在窗口左上角，品牌区下移让位
+      style={isMacOS() ? { paddingTop: 34 } : undefined}
+    >
       {/* 品牌区（与桌面图标同构的黑胶 logo） */}
       <div className="flex items-center gap-3.5 px-3 pt-2 pb-6">
         <Logo size={44} />

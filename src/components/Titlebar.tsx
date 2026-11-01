@@ -1,10 +1,14 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { Minus, Square, X, Copy } from "lucide-react";
 import { useEffect, useState } from "react";
+import { isMacOS } from "../utils";
 
 export default function Titlebar() {
   const [maximized, setMaximized] = useState(false);
   const win = getCurrentWindow();
+  // macOS 用系统原生窗口（titleBarStyle: Overlay），红绿灯由系统绘制，
+  // 不再画自绘的三颗按钮——重复一套会同时出现两种窗口控件
+  const mac = isMacOS();
 
   useEffect(() => {
     let disposed = false;
@@ -31,27 +35,30 @@ export default function Titlebar() {
         className="absolute top-0 left-0 right-0 h-9 z-[54] pointer-events-auto"
       />
 
-      {/* 窗口控制按钮（右上角悬浮，压在热区之上、内容区右上角留白处） */}
-      <div className="absolute top-0 right-0 flex items-center h-9 z-[56]">
-        <button
-          className="titlebar-btn w-11 h-9 flex items-center justify-center text-[var(--ink-2)] hover:bg-[var(--shade)] hover:text-[var(--ink)] transition-colors"
-          onClick={() => win.minimize()}
-        >
-          <Minus size={14} />
-        </button>
-        <button
-          className="titlebar-btn w-11 h-9 flex items-center justify-center text-[var(--ink-2)] hover:bg-[var(--shade)] hover:text-[var(--ink)] transition-colors"
-          onClick={() => win.toggleMaximize()}
-        >
-          {maximized ? <Copy size={12} className="-scale-x-100" /> : <Square size={11} />}
-        </button>
-        <button
-          className="titlebar-btn w-11 h-9 flex items-center justify-center text-[var(--ink-2)] hover:bg-[#c73e2e] hover:text-[var(--ink)] transition-colors"
-          onClick={() => win.close()}
-        >
-          <X size={15} />
-        </button>
-      </div>
+      {/* 窗口控制按钮（右上角悬浮，压在热区之上、内容区右上角留白处）。
+          macOS 走系统红绿灯（左上角），这里整体不渲染 */}
+      {!mac && (
+        <div className="absolute top-0 right-0 flex items-center h-9 z-[56]">
+          <button
+            className="titlebar-btn w-11 h-9 flex items-center justify-center text-[var(--ink-2)] hover:bg-[var(--shade)] hover:text-[var(--ink)] transition-colors"
+            onClick={() => win.minimize()}
+          >
+            <Minus size={14} />
+          </button>
+          <button
+            className="titlebar-btn w-11 h-9 flex items-center justify-center text-[var(--ink-2)] hover:bg-[var(--shade)] hover:text-[var(--ink)] transition-colors"
+            onClick={() => win.toggleMaximize()}
+          >
+            {maximized ? <Copy size={12} className="-scale-x-100" /> : <Square size={11} />}
+          </button>
+          <button
+            className="titlebar-btn w-11 h-9 flex items-center justify-center text-[var(--ink-2)] hover:bg-[#c73e2e] hover:text-[var(--ink)] transition-colors"
+            onClick={() => win.close()}
+          >
+            <X size={15} />
+          </button>
+        </div>
+      )}
     </>
   );
 }
