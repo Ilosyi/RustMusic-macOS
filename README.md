@@ -2,11 +2,21 @@
 
 一款用 **Rust + Tauri 2 + React** 打造的高性能、精美界面的桌面音乐播放器。
 
-![Rust](https://img.shields.io/badge/Rust-1.87%2B-DEA584?logo=rust&logoColor=white) ![Tauri](https://img.shields.io/badge/Tauri-2-24C8D8?logo=tauri&logoColor=white) ![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black) ![Node](https://img.shields.io/badge/Node-20%2B-5FA04E?logo=nodedotjs&logoColor=white) ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-0078D6)
+![Rust](https://img.shields.io/badge/Rust-1.87%2B-DEA584?logo=rust&logoColor=white) ![Tauri](https://img.shields.io/badge/Tauri-2-24C8D8?logo=tauri&logoColor=white) ![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black) ![Node](https://img.shields.io/badge/Node-20%2B-5FA04E?logo=nodedotjs&logoColor=white) ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-0078D6) ![macOS](https://img.shields.io/badge/macOS-Apple%20Silicon-000000?logo=apple&logoColor=white)
 
 
 
 ![image-20261023115804740](https://cdn.jsdelivr.net/gh/LingyunStudio/LingyunImg@master/2026/10/upgit_20261023_1792727886.png)
+
+> ### 🍎 macOS 版（Apple Silicon）
+>
+> 本仓库是 [LingyunStudio/RustMusic](https://github.com/LingyunStudio/RustMusic) v0.6.0 的 **macOS 适配分支**，已补丁并在 macOS 26 / Apple Silicon 上实测通过。
+>
+> **[⬇️ 下载 RustMusic_0.6.0_aarch64.dmg](https://github.com/Ilosyi/RustMusic-macOS/releases/latest)**
+>
+> 首次打开若提示「无法验证开发者」：右键点 App → 打开；或执行 `xattr -dr com.apple.quarantine /Applications/RustMusic.app`（未做苹果公证）。
+>
+> macOS 适配内容包括：系统原生 Overlay 标题栏（红绿灯）、中文化应用菜单栏（修复 ⌘C/⌘V/⌘Q 失效）、点 Dock 图标恢复隐藏窗口、菜单栏模板图标、透明桌面歌词浮窗、钥匙串凭据后端、系统媒体控制（控制中心 / 键盘媒体键），以及一处 WAV/OGG 解码修复（上游同源 bug，全平台受益）。详见 [macOS-适配说明.md](macOS-适配说明.md)。
 
 ## ✨ 功能特性
 
