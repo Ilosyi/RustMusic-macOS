@@ -1,0 +1,1225 @@
+diff --git a/README.md b/README.md
+index 9b58588..a0ba45c 100644
+--- a/README.md
++++ b/README.md
+@@ -2,12 +2,23 @@
+ 
+ 一款用 **Rust + Tauri 2 + React** 打造的高性能、精美界面的桌面音乐播放器。
+ 
+-![Rust](https://img.shields.io/badge/Rust-1.87%2B-DEA584?logo=rust&logoColor=white) ![Tauri](https://img.shields.io/badge/Tauri-2-24C8D8?logo=tauri&logoColor=white) ![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black) ![Node](https://img.shields.io/badge/Node-20%2B-5FA04E?logo=nodedotjs&logoColor=white) ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-0078D6)
++![Rust](https://img.shields.io/badge/Rust-1.87%2B-DEA584?logo=rust&logoColor=white) ![Tauri](https://img.shields.io/badge/Tauri-2-24C8D8?logo=tauri&logoColor=white) ![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black) ![Node](https://img.shields.io/badge/Node-20%2B-5FA04E?logo=nodedotjs&logoColor=white) ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-0078D6) ![macOS](https://img.shields.io/badge/macOS-Apple%20Silicon-000000?logo=apple&logoColor=white)
+ 
+ 
+ 
+ ![image-20261023115804740](https://cdn.jsdelivr.net/gh/LingyunStudio/LingyunImg@master/2026/10/upgit_20261023_1792727886.png)
+ 
++> ### 🍎 macOS 版（Apple Silicon）
++>
++> 本仓库是 [LingyunStudio/RustMusic](https://github.com/LingyunStudio/RustMusic) **v0.7.1** 的 macOS 适配分支，已补丁并在 macOS 26 / Apple Silicon 上实测通过。
++>
++> **[⬇️ 下载 RustMusic_0.7.1_aarch64.dmg](https://github.com/Ilosyi/RustMusic-macOS/releases/latest)**
++>
++> 首次打开若提示「无法验证开发者」：右键点 App → 打开；或执行 `xattr -dr com.apple.quarantine /Applications/RustMusic.app`（ad-hoc 签名、未做苹果公证）。
++>
++> macOS 适配内容包括：系统原生 Overlay 标题栏（红绿灯）与三套界面体系自适应、中文化应用菜单栏（修复 ⌘C/⌘V/⌘Q 失效）、点 Dock 图标恢复隐藏窗口、菜单栏模板图标、透明桌面歌词浮窗、迷你小窗、系统媒体控制（控制中心 / 键盘媒体键），凭据改为本机文件存储（避免每次升级都弹钥匙串密码框），以及 OGG 解码补全。
++> 详见 [macOS-适配说明.md](macOS-适配说明.md)。
++
+ ## ✨ 功能特性
+ 
+ ### 播放引擎（纯 Rust）
+@@ -114,7 +125,7 @@
+         └── updater.rs       # GitHub Release 自动更新（下载 + SHA-256 校验 + 静默安装）
+ ```
+ 
+-**选型说明**：Tauri 2 = Rust 高性能后端 + Web 渲染的精美界面；框架天然支持 Windows / macOS / Linux（当前支持 Windows 与 Linux 构建），未来可低成本扩展。
++**选型说明**：Tauri 2 = Rust 高性能后端 + Web 渲染的精美界面；框架天然支持 Windows / macOS / Linux（当前支持 Windows / macOS / Linux 构建）。
+ 
+ ### 💡 核心设计亮点：WebView2 TrySuspend 深度休眠与事件驱动后台切歌（Windows）
+ 
+@@ -196,7 +207,7 @@ cd src-tauri && cargo test --bin rustmusic --locked
+ - [ ] QQ / 酷狗 / Navidrome 歌词翻译（网易云已支持）
+ - [ ] 音频转码 / 标签批量编辑
+ - [x] Linux 构建
+-- [ ] macOS 构建
++- [x] macOS 构建（Apple Silicon，见上方 macOS 版说明）
+ 
+ ## 📄 许可证
+ 
+diff --git "a/macOS-\351\200\202\351\205\215\350\257\264\346\230\216.md" "b/macOS-\351\200\202\351\205\215\350\257\264\346\230\216.md"
+new file mode 100644
+index 0000000..4210325
+--- /dev/null
++++ "b/macOS-\351\200\202\351\205\215\350\257\264\346\230\216.md"
+@@ -0,0 +1,124 @@
++# RustMusic macOS 版（0.7.1，Apple Silicon）
++
++上游项目：[LingyunStudio/RustMusic](https://github.com/LingyunStudio/RustMusic)（Tauri 2 + React + Rust，官方只发 Windows / Linux）。
++本仓库是在上游 **v0.7.1**（`3a7a452`）之上打的 macOS 适配分支，已在本机（macOS 26 / Apple Silicon / arm64）实测通过。
++
++## 交付物
++
++| 文件 | 说明 |
++| --- | --- |
++| `RustMusic_0.7.1_aarch64.dmg` | 安装镜像，双击后把 RustMusic 拖进 Applications（7.2 MB） |
++| `RustMusic.app` | 已 ad-hoc 签名的应用本体，可直接拖进 /Applications |
++| `rustmusic-macos-port.patch` | 相对上游 v0.7.1 的全部改动（`git diff`，含新增文件） |
++
++SHA-256（dmg）：`09f4a35256b20400aadacb13b7857bb060929adb2efe3ad1ac8e6f2e24f0e381`
++
++## 安装 / 首次运行
++
++1. 打开 `RustMusic_0.7.1_aarch64.dmg`，把 RustMusic 拖到 Applications。
++2. 首次启动若提示「无法打开，因为无法验证开发者」：右键点图标 → 打开 → 再点「打开」；或执行
++   `xattr -dr com.apple.quarantine /Applications/RustMusic.app`。
++   （构建是 ad-hoc 签名、未走苹果公证，这是分发方式决定的，不是包坏了。）
++3. 首次使用会正常启动，**不会**弹钥匙串密码框（见下方「凭据存储」）。
++
++## 0.7.1 相比 0.6.0 的上游变化（本版已一并适配）
++
++- 三大界面体系：标准 / 拟物 / 液态玻璃，组件、视图按主题各有一份实现。
++- 独立极简小窗（迷你模式）：360×118 无边框小窗，可拖拽、双击或 ⤢ 还原主窗口。
++- 三大音源 SVIP 音质档位、真实音质显示。
++- 上游修复：迷你模式长歌词跑马灯、资料库/我喜欢工具栏排版、WAV 解码（`symphonia-pcm`）。
++
++## macOS 适配做了什么
++
++### 1. 窗口与外观：改用系统原生窗口
++- 新增 `src-tauri/tauri.macos.conf.json`（Tauri 平台配置合并文件，RFC 7396 数组整体替换）：macOS 上
++  `decorations: true` + `titleBarStyle: "Overlay"` + `hiddenTitle: true` + `trafficLightPosition: {x:16, y:18}` + `shadow: true`，
++  Windows / Linux 继续走无框自绘窗口。
++- 三套标题栏（`Titlebar.standard|skeuo|liquid.tsx`）的按钮组统一加 `win-btns` 类，`src/index.css` 里
++  `html[data-platform="macos"] .win-btns { display: none; }` 隐藏自绘按钮，避免与红绿灯重复一套。
++- 三套侧栏（`Sidebar.standard|skeuo|liquid.tsx`）加 `app-sidebar` / `app-sidebar-card` 类，macOS 下
++  顶部让出 34px（液态玻璃卡片额外下移），品牌区不再压在红绿灯下面。
++- `src/main.tsx` + `src/utils.ts`：平台识别补上 `macos`（原本只区分 windows / linux），新增 `isMacOS()`。
++
++### 2. 系统菜单栏（关键修复）
++macOS 下应用没有菜单栏时，WebView 里 **⌘C / ⌘V / ⌘A / ⌘Z 全部失效**，⌘Q / ⌘W / ⌘H 也无处派发。
++`src-tauri/src/main.rs` 在 `setup()` 里按 AppKit 约定手工拼了一套中文菜单（RustMusic / 文件 / 编辑 / 显示 / 窗口），
++编辑项全部用系统 predefined 项，实际行为交还 AppKit。菜单栏显示为「RustMusic 文件 编辑 显示 窗口」。
++
++### 3. 交互与系统集成
++- **关闭窗口 = 隐藏到菜单栏**：沿用上游 `close_action` 设置，文案在 macOS 显示为「最小化到菜单栏」。
++- **点 Dock 图标恢复窗口**：`main.rs` 接管 `RunEvent::Reopen`——窗口隐藏后点 Dock 图标系统只发 Reopen 事件，
++  不接管就是「点图标毫无反应」。
++- **菜单栏图标**：`src-tauri/icons/tray-template.png`（44×44 模板图，随亮/暗外观自动反相），`tray.rs` 用
++  `icon_as_template` 挂载；彩色 App 图标塞进菜单栏会糊成一团脏色。
++- **系统媒体控制**：沿用上游 souvlaki（macOS 走 `MPRemoteCommandCenter`），控制中心「正在播放」与键盘媒体键
++  可播放 / 暂停 / 上下曲，封面与曲目信息正常。
++- **桌面歌词浮窗**：启用 tauri `macos-private-api` + `transparent(true)` + `background_color(0,0,0,0)` +
++  `visible_on_all_workspaces(true)`，实现真正的透明悬浮文字；`src/desktop-lyrics/main.tsx` 补 macOS 分支
++  （原逻辑把 macOS 误判成 Linux，会退化成实色黑底）。
++- **迷你小窗**：继承同一套无边框 + 透明能力，红绿灯与拖拽区域正常。
++
++### 4. 音频与凭据（本版有两处与 0.6.0 不同）
++
++**WAV / OGG 解码**：上游 0.7.1 已补 `symphonia-pcm`（WAV 可播）；本分支再补 `symphonia-ogg`，
++OGG(Vorbis) 容器也能正常解码播放（`AUDIO_EXTS` 里一直列着 wav / ogg）。
++
++**凭据存储改为本机文件（重要）**：
++- 0.6.0 用 `keyring` + `apple-native`（系统钥匙串）。实测问题：Security.framework 把钥匙串条目的 ACL
++  绑定到写入者二进制的 cdhash，而 ad-hoc 签名的哈希每次重新构建/升级都会变——应用读不回自己写的条目，
++  启动时直接卡在系统密码弹窗后面（「RustMusic 想要使用你储存在钥匙串的“RustMusic”中的机密信息」），
++  用户在弹窗里输密码才能进主界面。
++- 因此 macOS 版改用 `src-tauri/src/secret_store.rs`：把凭据写进 `<应用数据目录>/credentials.json`
++  （原子写入、`0600` 权限、仅当前用户可读），`credentials.rs` / `navidrome.rs` 的读写全部走这一层；
++  Windows / Linux 仍用系统凭据管理器 / Secret Service，行为不变。
++- 代价：文件是明文（但对其他用户不可读），且 0.6.0 时代存进钥匙串的旧条目不再读取——需要重新登录
++  网易云 / 哔哩哔哩 / Navidrome 一次。换来的是**每次升级都不会再问钥匙串密码**。
++
++### 5. 界面文案
++- 「在资源管理器中显示」「在文件管理器中打开」→ macOS 显示「在访达中显示」。
++- 关闭窗口项：「最小化到菜单栏」+「隐藏后音乐继续播放：点 Dock 图标或菜单栏图标可重新打开主界面，⌘Q 完全退出。」
++- 更新说明按平台改口径：macOS 版不内置安装器，点「立即更新」跳 GitHub 发布页下载 dmg 手动安装。
++- Navidrome 密码说明：macOS 显示「密码仅保存在本机应用数据目录（仅当前用户可读）」，不再提凭据管理器。
++- 桌面歌词锁定提示：macOS 不提「托盘菜单」，只提主窗口按 L 解锁。
++- 关于页脚：界面支持 Windows / macOS / Linux（WASAPI 独占输出仅 Windows）。
++
++### 6. 打包
++- macOS 平台配置里 `bundle.targets: ["app", "dmg"]`（基础配置是 `[]`，不覆盖就只产出裸二进制）、
++  `minimumSystemVersion: "11.0"`、`signingIdentity: "-"`（ad-hoc；arm64 上未签名二进制会被系统直接拒绝启动），
++  DMG 窗口 660×400 布局。`bundle.icon` 补齐 32 / 128 / 128@2x / icns / ico。
++- `app.macOSPrivateApi: true`（透明窗口需要）。
++- 注意：`bundle.macOS.category` 不是 tauri-utils 2.9.3 的合法字段，写进去构建会直接报 unknown field。
++
++## 本机验证结果（macOS 26 / Apple Silicon）
++
++- 构建：`npm run tauri build` → `RustMusic.app` + `RustMusic_0.7.1_aarch64.dmg`（7.2 MB）✅
++- 启动：/Applications 中启动正常，无钥匙串弹窗，资料库空态干净 ✅
++- 外壳：原生红绿灯 + 中文菜单栏「RustMusic 文件 编辑 显示 窗口」，三套主题（标准 / 拟物 / 液态玻璃）下
++  侧栏品牌区都不压红绿灯 ✅
++- 音频：m4a、WAV 在 CoreAudio 默认设备正常播放，位置推进、暂停、切歌正常 ✅
++- 桌面歌词：「词」按钮打开 800×150 透明浮窗，文字浮在播放条之上、无底色 ✅
++- 迷你小窗：360×118 小窗打开正常，⤢ 还原主窗口正常 ✅
++- 系统媒体控制：控制中心「正在播放」显示曲目 / 应用图标，可播放暂停 ✅
++- 关闭窗口 → 隐藏（进程存活）；点 Dock 图标 / `open -a` → `RunEvent::Reopen` 恢复窗口 ✅
++- 设置页：最小化到菜单栏、macOS 更新说明、在访达中显示、输出设备「跟随系统默认（MacBook Air 扬声器）」✅
++
++## 已知限制
++
++- **无苹果公证**：首次打开必须右键 → 打开（或 `xattr` 清 quarantine），这是 ad-hoc 签名的必然结果。
++- **菜单栏图标可能被刘海遮住**：刘海屏 MacBook 上菜单栏右侧被摄像头区切断，macOS 会把新加的状态项
++  排到刘海下方（图标仍在，但看不见、点不到）。临时办法：关掉几个其他菜单栏图标，或直接用 Dock 图标
++  （已实现 Reopen，隐藏后点 Dock 即可恢复）。功能本身没问题。
++- **自动更新需手动安装**：点「立即更新」只跳 GitHub 发布页，需自己下 dmg 覆盖（与 Linux 版一致）。
++- **WASAPI 独占 / 任务栏歌词**：Windows 专属，macOS 上相关设置项不显示。
++- 仅提供 **arm64（Apple Silicon）** 构建，未提供 Intel / Universal 包。
++
++## 重新构建
++
++```bash
++# 依赖：Xcode Command Line Tools、Node 20+、Rust stable
++npm install
++npm run tauri build          # 产出 src-tauri/target/release/bundle/{macos,dmg}
++```
++
++本地开发：`npm run tauri dev`。若要对外分发并消除 Gatekeeper 提示，需要 Apple Developer 证书做正式签名 + 公证
++（`APPLE_ID` / `APPLE_PASSWORD` / `APPLE_TEAM_ID` 或 `APPLE_API_*`），此时可去掉 `signingIdentity: "-"`。
+diff --git a/src-tauri/Cargo.lock b/src-tauri/Cargo.lock
+index 6dd3732..b3c1fcc 100644
+--- a/src-tauri/Cargo.lock
++++ b/src-tauri/Cargo.lock
+@@ -4549,6 +4549,7 @@ dependencies = [
+  "symphonia-codec-vorbis",
+  "symphonia-core",
+  "symphonia-format-isomp4",
++ "symphonia-format-ogg",
+  "symphonia-format-riff",
+  "symphonia-metadata",
+ ]
+@@ -4645,6 +4646,18 @@ dependencies = [
+  "symphonia-utils-xiph",
+ ]
+ 
++[[package]]
++name = "symphonia-format-ogg"
++version = "0.5.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "2b4955c67c1ed3aa8ae8428d04ca8397fbef6a19b2b051e73b5da8b1435639cb"
++dependencies = [
++ "log",
++ "symphonia-core",
++ "symphonia-metadata",
++ "symphonia-utils-xiph",
++]
++
+ [[package]]
+ name = "symphonia-format-riff"
+ version = "0.5.5"
+@@ -4820,6 +4833,7 @@ dependencies = [
+  "heck 0.5.0",
+  "http",
+  "http-range",
++ "image",
+  "jni",
+  "libc",
+  "log",
+diff --git a/src-tauri/Cargo.toml b/src-tauri/Cargo.toml
+index ad02359..03a0997 100644
+--- a/src-tauri/Cargo.toml
++++ b/src-tauri/Cargo.toml
+@@ -18,13 +18,16 @@ custom-protocol = ["tauri/custom-protocol"]
+ tauri-build = { version = "~2.6", features = [] }
+ 
+ [dependencies]
+-tauri = { version = "~2.11", features = ["tray-icon", "protocol-asset"] }
++# macos-private-api：桌面歌词窗口在 macOS 上只有走私有 API 才能真正透明（其它平台忽略）
++# image-png：菜单栏模板图标走 Image::from_bytes 解码
++tauri = { version = "~2.11", features = ["tray-icon", "protocol-asset", "macos-private-api", "image-png"] }
+ tauri-plugin-dialog = "~2.7"
+ serde = { version = "1", features = ["derive"] }
+ serde_json = "1"
+ # symphonia-wav 只注册 WAV 容器解析（symphonia/format-riff），
+ # PCM 解码器在独立的 symphonia-pcm feature 里，缺它 WAV 会报 UnrecognizedFormat
+-rodio = { version = "0.22", default-features = false, features = ["playback", "symphonia-mp3", "symphonia-aac", "symphonia-isomp4", "symphonia-vorbis", "symphonia-wav", "symphonia-pcm", "flac"] }
++# symphonia-vorbis 只注册解码器，OGG 容器解析在 symphonia-ogg 里，缺它 .ogg 报 UnrecognizedFormat
++rodio = { version = "0.22", default-features = false, features = ["playback", "symphonia-mp3", "symphonia-aac", "symphonia-isomp4", "symphonia-vorbis", "symphonia-ogg", "symphonia-wav", "symphonia-pcm", "flac"] }
+ lofty = "0.22"
+ rusqlite = { version = "0.32", features = ["bundled"] }
+ walkdir = "2"
+@@ -50,8 +53,9 @@ hex = "0.4"
+ num-bigint = "0.4"
+ rand = "0.8"
+ # 凭据管理：按平台启用后端（Windows=凭据管理器；Linux=Secret Service，
+-# zbus 实现纯 Rust 无 C 依赖；crypto-rust 避免 openssl-sys）
+-keyring = { version = "~3.6", default-features = false }
++# zbus 实现纯 Rust 无 C 依赖；crypto-rust 避免 openssl-sys）。
++# macOS 不引入 keyring：钥匙串条目 ACL 绑定代码签名 cdhash，ad-hoc 签名每次
++# 构建/升级都会变，读自己的条目会弹密码框并卡住启动 → 见 src/secret_store.rs
+ qrcode = { version = "0.14", default-features = false, features = ["image"] }
+ filetime = "0.2"
+ # .lrc 歌词文件的 GBK/GB18030 编码支持（Windows 记事本圈常见编码）
+diff --git a/src-tauri/icons/tray-template.png b/src-tauri/icons/tray-template.png
+new file mode 100644
+index 0000000..a6d33fe
+Binary files /dev/null and b/src-tauri/icons/tray-template.png differ
+diff --git a/src-tauri/src/commands/app.rs b/src-tauri/src/commands/app.rs
+index 4f5162c..7b18fea 100644
+--- a/src-tauri/src/commands/app.rs
++++ b/src-tauri/src/commands/app.rs
+@@ -507,6 +507,15 @@ pub async fn desktop_lyrics_open(app: AppHandle) -> Result<(), String> {
+             .transparent(true)
+             .background_color(tauri::utils::config::Color(0, 0, 0, 0));
+     }
++    // macOS：WKWebView 透明窗口（依赖 macos-private-api 特性），
++    // 同时让歌词窗跟随所有 Space——桌面歌词挂在当前桌面之外就失去意义
++    #[cfg(target_os = "macos")]
++    {
++        builder = builder
++            .transparent(true)
++            .background_color(tauri::utils::config::Color(0, 0, 0, 0))
++            .visible_on_all_workspaces(true);
++    }
+     // Windows：透明窗口 + WebView2 alpha=0 背景（纯悬浮文字形态）
+     #[cfg(windows)]
+     {
+diff --git a/src-tauri/src/credentials.rs b/src-tauri/src/credentials.rs
+index 8f9daa2..b72182f 100644
+--- a/src-tauri/src/credentials.rs
++++ b/src-tauri/src/credentials.rs
+@@ -1,4 +1,5 @@
+-//! 登录凭据存取：平台 token 统一走系统凭据管理器（keyring），不再明文落库。
++//! 登录凭据存取：平台 token 统一走系统凭据管理器（macOS 走 secret_store 的
++//! 本地 0600 文件，原因见 secret_store.rs 模块注释），不再明文落库。
+ //! SQLite 只保留非敏感字段（昵称、uid 等）。
+ //!
+ //! 旧版本把 token 明文写在 settings 表；启动时 migrate_legacy 迁入
+@@ -22,28 +23,14 @@ const KEYS: [&str; 5] = [
+     "bili_buvid3",
+ ];
+ 
+-fn entry(key: &str) -> Result<keyring::Entry, String> {
+-    keyring::Entry::new(SERVICE, key).map_err(|e| format!("凭据管理器不可用: {e}"))
+-}
+-
+ /// 读取平台 token；无凭据返回 None（含空串视为无）
+ pub fn get(key: &str) -> Option<String> {
+-    let v = entry(key).ok()?.get_password().ok()?;
+-    Some(v).filter(|s| !s.is_empty())
++    crate::secret_store::get(SERVICE, key)
+ }
+ 
+ /// 写入平台 token（空串 = 清除）
+ pub fn set(key: &str, value: &str) -> Result<(), String> {
+-    let e = entry(key)?;
+-    if value.is_empty() {
+-        match e.delete_credential() {
+-            Ok(()) => Ok(()),
+-            Err(keyring::Error::NoEntry) => Ok(()),
+-            Err(err) => Err(format!("清除凭据失败: {err}")),
+-        }
+-    } else {
+-        e.set_password(value).map_err(|err| format!("保存凭据失败: {err}"))
+-    }
++    crate::secret_store::set(SERVICE, key, value)
+ }
+ 
+ /// 清除平台 token（幂等）
+diff --git a/src-tauri/src/main.rs b/src-tauri/src/main.rs
+index 3a081c3..16bb6dd 100644
+--- a/src-tauri/src/main.rs
++++ b/src-tauri/src/main.rs
+@@ -17,6 +17,8 @@ mod net;
+ mod netease;
+ mod qq;
+ mod qrc;
++// 平台机密存储：Windows/Linux 走系统凭据管理器，macOS 走本地 0600 文件
++mod secret_store;
+ #[cfg(test)]
+ mod quality_audit;
+ mod smtc;
+@@ -175,6 +177,52 @@ fn main() {
+                     let _ = main.set_focus();
+                 }
+             }
++            // macOS：系统菜单栏是 WebView 编辑快捷键的来源——没有 Edit 菜单时
++            // ⌘C/⌘V/⌘A/⌘Z 在输入框里全部失效，⌘Q/⌘W/⌘H 也无从派发。
++            // 不用 Menu::default()：它内置英文文案，与中文界面割裂；这里按
++            // AppKit 约定手工拼一套中文菜单（predefined 项保证行为交给系统）
++            #[cfg(target_os = "macos")]
++            {
++                use tauri::menu::{MenuBuilder, PredefinedMenuItem, SubmenuBuilder};
++                let h = app.handle();
++                let sep = || PredefinedMenuItem::separator(h);
++                let app_menu = SubmenuBuilder::new(h, "RustMusic")
++                    .item(&PredefinedMenuItem::about(h, Some("关于 RustMusic"), None)?)
++                    .item(&sep()?)
++                    .item(&PredefinedMenuItem::services(h, Some("服务"))?)
++                    .item(&sep()?)
++                    .item(&PredefinedMenuItem::hide(h, Some("隐藏 RustMusic"))?)
++                    .item(&PredefinedMenuItem::hide_others(h, Some("隐藏其他"))?)
++                    .item(&PredefinedMenuItem::show_all(h, Some("全部显示"))?)
++                    .item(&sep()?)
++                    .item(&PredefinedMenuItem::quit(h, Some("退出 RustMusic"))?)
++                    .build()?;
++                let file_menu = SubmenuBuilder::new(h, "文件")
++                    .item(&PredefinedMenuItem::close_window(h, Some("关闭窗口"))?)
++                    .build()?;
++                let edit_menu = SubmenuBuilder::new(h, "编辑")
++                    .item(&PredefinedMenuItem::undo(h, Some("撤销"))?)
++                    .item(&PredefinedMenuItem::redo(h, Some("重做"))?)
++                    .item(&sep()?)
++                    .item(&PredefinedMenuItem::cut(h, Some("剪切"))?)
++                    .item(&PredefinedMenuItem::copy(h, Some("复制"))?)
++                    .item(&PredefinedMenuItem::paste(h, Some("粘贴"))?)
++                    .item(&PredefinedMenuItem::select_all(h, Some("全选"))?)
++                    .build()?;
++                let view_menu = SubmenuBuilder::new(h, "显示")
++                    .item(&PredefinedMenuItem::fullscreen(h, Some("进入全屏"))?)
++                    .build()?;
++                let window_menu = SubmenuBuilder::new(h, "窗口")
++                    .item(&PredefinedMenuItem::minimize(h, Some("最小化"))?)
++                    .item(&PredefinedMenuItem::maximize(h, Some("缩放"))?)
++                    .item(&sep()?)
++                    .item(&PredefinedMenuItem::bring_all_to_front(h, Some("前置全部窗口"))?)
++                    .build()?;
++                let menu = MenuBuilder::new(h)
++                    .items(&[&app_menu, &file_menu, &edit_menu, &view_menu, &window_menu])
++                    .build()?;
++                app.set_menu(menu)?;
++            }
+             // 无框窗口关掉 DWM 边框后 Win11 会失去圆角，这里单独设回圆角
+             //（DWMWA_WINDOW_CORNER_PREFERENCE = ROUND；Win10 无此属性，静默忽略）
+             #[cfg(windows)]
+@@ -214,6 +262,7 @@ fn main() {
+                 }
+             }
+             let app_data = handle.path().app_data_dir().map_err(|e| e.to_string())?;
++            secret_store::init(app_data.clone());
+             std::fs::create_dir_all(app_data.join("covers")).map_err(|e| e.to_string())?;
+             std::fs::create_dir_all(app_data.join("downloads")).map_err(|e| e.to_string())?;
+ 
+@@ -468,6 +517,15 @@ fn main() {
+             commands::set_auto_update,
+             commands::open_url,
+         ])
+-        .run(tauri::generate_context!())
+-        .expect("error while running tauri application");
++        .build(tauri::generate_context!())
++        .expect("error while building tauri application")
++        .run(|app_handle, event| {
++            // macOS：关闭主窗口是"隐藏到菜单栏"，此时点 Dock 图标系统只发
++            // Reopen（没有可见窗口），不接管就成了"点图标毫无反应"
++            #[cfg(target_os = "macos")]
++            if let tauri::RunEvent::Reopen { .. } = event {
++                webview_suspend::show_main(app_handle);
++            }
++            let _ = (app_handle, event);
++        });
+ }
+diff --git a/src-tauri/src/navidrome.rs b/src-tauri/src/navidrome.rs
+index f83d616..a898963 100644
+--- a/src-tauri/src/navidrome.rs
++++ b/src-tauri/src/navidrome.rs
+@@ -2,7 +2,8 @@
+ //!
+ //! 连接用户自建的 Navidrome / Subsonic 服务器：搜索、专辑浏览、播放流。
+ //! 认证采用 Subsonic 标准的 salt+token 方案（token = md5(密码 + salt)）；
+-//! **密码保存在系统凭据管理器**（keyring：Windows 凭据管理器 / Linux Secret Service），不落数据库、不进前端。
++//! **密码保存在系统凭据管理器**（Windows 凭据管理器 / Linux Secret Service / macOS 本地 0600 文件，
++//! 统一走 crate::secret_store），不落数据库、不进前端。
+ 
+ use md5::{Digest as Md5Digest, Md5};
+ use rand::Rng;
+@@ -15,30 +16,25 @@ const API_VER: &str = "1.16.1";
+ 
+ // ---------- 凭据管理器 ----------
+ 
+-fn keyring_entry(server: &str, username: &str) -> Result<keyring::Entry, String> {
+-    // 键统一用归一化后的服务器名（补 scheme、去尾斜杠），
+-    // 避免"存的是 http://…、取的是原始输入"导致键对不上
+-    let server = norm_base(server);
+-    keyring::Entry::new("RustMusic Navidrome", &format!("{server}|{username}"))
+-        .map_err(|e| format!("凭据管理器不可用: {e}"))
++const NAV_SERVICE: &str = "RustMusic Navidrome";
++
++/// 凭据账号键：归一化后的服务器名 + 用户名。
++/// 统一用归一化后的服务器名（补 scheme、去尾斜杠），
++/// 避免"存的是 http://…、取的是原始输入"导致键对不上
++fn store_account(server: &str, username: &str) -> String {
++    format!("{}|{username}", norm_base(server))
+ }
+ 
+ /// 密码存入 Windows 凭据管理器
+ pub fn save_password(server: &str, username: &str, password: &str) -> Result<(), String> {
+-    keyring_entry(server, username)?
+-        .set_password(password)
+-        .map_err(|e| format!("凭据保存失败: {e}"))?;
++    crate::secret_store::set(NAV_SERVICE, &store_account(server, username), password)?;
+     pw_cache_invalidate(server, username);
+     Ok(())
+ }
+ 
+ /// 从凭据管理器删除密码
+ pub fn delete_password(server: &str, username: &str) -> Result<(), String> {
+-    let r = match keyring_entry(server, username)?.delete_credential() {
+-        Ok(()) => Ok(()),
+-        Err(keyring::Error::NoEntry) => Ok(()),
+-        Err(e) => Err(format!("凭据删除失败: {e}")),
+-    };
++    let r = crate::secret_store::delete(NAV_SERVICE, &store_account(server, username));
+     pw_cache_invalidate(server, username);
+     r
+ }
+@@ -65,9 +61,8 @@ fn get_password(server: &str, username: &str) -> Result<String, String> {
+             return Ok(hit.clone());
+         }
+     }
+-    let pw = keyring_entry(server, username)?
+-        .get_password()
+-        .map_err(|_| "未找到保存的密码，请重新保存连接".to_string())?;
++    let pw = crate::secret_store::get(NAV_SERVICE, &store_account(server, username))
++        .ok_or_else(|| "未找到保存的密码，请重新保存连接".to_string())?;
+     if let Ok(mut m) = pw_cache().lock() {
+         m.insert(key, pw.clone());
+     }
+diff --git a/src-tauri/src/secret_store.rs b/src-tauri/src/secret_store.rs
+new file mode 100644
+index 0000000..5876620
+--- /dev/null
++++ b/src-tauri/src/secret_store.rs
+@@ -0,0 +1,136 @@
++//! 平台机密存储的统一入口（服务名 + 账号 → 机密字符串）。
++//!
++//! Windows / Linux：系统凭据管理器（keyring：Windows 凭据管理器 / Secret Service）。
++//! macOS：Application Support 目录下的 0600 JSON 文件。
++//!
++//! macOS 为什么不走钥匙串：Security.framework 把条目的 ACL 绑定到写入者的代码
++//! 签名（cdhash）。本项目只能做 ad-hoc 签名（开源分发无 Developer ID），每次
++//! 重新构建或升级 cdhash 都会变，于是「读自己写的条目」也会弹出
++//! 「RustMusic 想要使用你储存在钥匙串中的机密信息…请输入密码」，该弹窗同步
++//! 阻塞调用线程，应用直接卡在启动画面，用户除了手动输密码无路可走。
++//! 改用文件存储后：权限 0600、只有当前用户能读，升级/重装不再要求重新登录，
++//! 行为与 Windows 凭据管理器一致（同为「本机当前用户」级别的隔离）。
++
++use std::path::PathBuf;
++use std::sync::OnceLock;
++
++static DATA_DIR: OnceLock<PathBuf> = OnceLock::new();
++
++/// 由启动流程注入应用数据目录（与 library.db 同目录）
++pub fn init(app_data_dir: PathBuf) {
++    let _ = DATA_DIR.set(app_data_dir);
++}
++
++#[cfg(target_os = "macos")]
++fn data_dir() -> PathBuf {
++    if let Some(d) = DATA_DIR.get() {
++        return d.clone();
++    }
++    // 兜底：注入之前访问（命令行工具/单测）按 macOS 约定推导
++    std::env::var_os("HOME")
++        .map(|h| PathBuf::from(h).join("Library/Application Support/com.rustmusic.app"))
++        .unwrap_or_else(std::env::temp_dir)
++}
++
++/// 读取机密；不存在或为空返回 None
++pub fn get(service: &str, account: &str) -> Option<String> {
++    imp::get(service, account)
++}
++
++/// 写入机密（空串 = 清除）
++pub fn set(service: &str, account: &str, value: &str) -> Result<(), String> {
++    imp::set(service, account, value)
++}
++
++/// 删除机密（幂等）
++pub fn delete(service: &str, account: &str) -> Result<(), String> {
++    imp::set(service, account, "")
++}
++
++#[cfg(target_os = "macos")]
++mod imp {
++    use super::data_dir;
++    use std::collections::BTreeMap;
++    use std::fs;
++    use std::io::Write;
++    use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
++
++    fn path() -> std::path::PathBuf {
++        data_dir().join("credentials.json")
++    }
++
++    /// 键 = 服务名 + 单元分隔符 + 账号（两个字段都可能含任意字符，用 US 分隔）
++    fn key(service: &str, account: &str) -> String {
++        format!("{service}\u{1f}{account}")
++    }
++
++    fn load() -> BTreeMap<String, String> {
++        match fs::read_to_string(path()) {
++            Ok(s) => serde_json::from_str(&s).unwrap_or_default(),
++            Err(_) => BTreeMap::new(),
++        }
++    }
++
++    fn save(map: &BTreeMap<String, String>) -> Result<(), String> {
++        let p = path();
++        if let Some(dir) = p.parent() {
++            fs::create_dir_all(dir).map_err(|e| format!("凭据目录创建失败: {e}"))?;
++        }
++        let body = serde_json::to_vec_pretty(map).map_err(|e| format!("凭据序列化失败: {e}"))?;
++        let tmp = p.with_extension("json.tmp");
++        let mut f = fs::OpenOptions::new()
++            .write(true)
++            .create(true)
++            .truncate(true)
++            .mode(0o600)
++            .open(&tmp)
++            .map_err(|e| format!("凭据文件写入失败: {e}"))?;
++        f.write_all(&body)
++            .map_err(|e| format!("凭据文件写入失败: {e}"))?;
++        f.sync_all().ok();
++        drop(f);
++        // 已存在的临时文件不受 mode() 约束，显式收紧权限后再原子替换
++        let _ = fs::set_permissions(&tmp, fs::Permissions::from_mode(0o600));
++        fs::rename(&tmp, &p).map_err(|e| format!("凭据文件替换失败: {e}"))?;
++        Ok(())
++    }
++
++    pub fn get(service: &str, account: &str) -> Option<String> {
++        load().remove(&key(service, account)).filter(|s| !s.is_empty())
++    }
++
++    pub fn set(service: &str, account: &str, value: &str) -> Result<(), String> {
++        let mut m = load();
++        let k = key(service, account);
++        if value.is_empty() {
++            // 清除不存在的条目同样视为成功（幂等）
++            m.remove(&k);
++        } else {
++            m.insert(k, value.to_string());
++        }
++        save(&m)
++    }
++}
++
++#[cfg(not(target_os = "macos"))]
++mod imp {
++    pub fn get(service: &str, account: &str) -> Option<String> {
++        let e = keyring::Entry::new(service, account).ok()?;
++        e.get_password().ok().filter(|s| !s.is_empty())
++    }
++
++    pub fn set(service: &str, account: &str, value: &str) -> Result<(), String> {
++        let e = keyring::Entry::new(service, account)
++            .map_err(|e| format!("凭据管理器不可用: {e}"))?;
++        if value.is_empty() {
++            match e.delete_credential() {
++                Ok(()) => Ok(()),
++                Err(keyring::Error::NoEntry) => Ok(()),
++                Err(err) => Err(format!("清除凭据失败: {err}")),
++            }
++        } else {
++            e.set_password(value)
++                .map_err(|err| format!("保存凭据失败: {err}"))
++        }
++    }
++}
+diff --git a/src-tauri/src/tray.rs b/src-tauri/src/tray.rs
+index 0b09e08..05600e9 100644
+--- a/src-tauri/src/tray.rs
++++ b/src-tauri/src/tray.rs
+@@ -109,8 +109,16 @@ pub(crate) fn setup_tray(app: &AppHandle) -> tauri::Result<()> {
+         update_dlyrics_tray(&app_closed);
+     });
+ 
++    // macOS 菜单栏走"模板图"：黑白单色 + 系统按亮/暗外观自动反相。
++    // 彩色 app 图标塞进菜单栏会糊成一团脏色，也不会跟随外观切换
++    #[cfg(target_os = "macos")]
++    let tray_icon = tauri::image::Image::from_bytes(include_bytes!("../icons/tray-template.png"))?;
++    #[cfg(not(target_os = "macos"))]
++    let tray_icon = app.default_window_icon().expect("missing app icon").clone();
++
+     TrayIconBuilder::with_id("main-tray")
+-        .icon(app.default_window_icon().expect("missing app icon").clone())
++        .icon(tray_icon)
++        .icon_as_template(cfg!(target_os = "macos"))
+         .tooltip("RustMusic")
+         .menu(&menu)
+         .show_menu_on_left_click(false)
+diff --git a/src-tauri/tauri.conf.json b/src-tauri/tauri.conf.json
+index 66c366d..68206e1 100644
+--- a/src-tauri/tauri.conf.json
++++ b/src-tauri/tauri.conf.json
+@@ -11,6 +11,7 @@
+   },
+   "app": {
+     "withGlobalTauri": false,
++    "macOSPrivateApi": true,
+     "windows": [
+       {
+         "label": "main",
+@@ -44,8 +45,30 @@
+     "active": true,
+     "targets": [],
+     "icon": [
++      "icons/32x32.png",
++      "icons/128x128.png",
++      "icons/128x128@2x.png",
++      "icons/icon.icns",
+       "icons/icon.ico",
+       "icons/icon.png"
+-    ]
++    ],
++    "macOS": {
++      "minimumSystemVersion": "11.0",
++      "signingIdentity": "-",
++      "dmg": {
++        "windowSize": {
++          "width": 660,
++          "height": 400
++        },
++        "appPosition": {
++          "x": 180,
++          "y": 170
++        },
++        "applicationFolderPosition": {
++          "x": 480,
++          "y": 170
++        }
++      }
++    }
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/src-tauri/tauri.macos.conf.json b/src-tauri/tauri.macos.conf.json
+new file mode 100644
+index 0000000..7e720db
+--- /dev/null
++++ b/src-tauri/tauri.macos.conf.json
+@@ -0,0 +1,28 @@
++{
++  "$schema": "https://schema.tauri.app/config/2",
++  "app": {
++    "windows": [
++      {
++        "label": "main",
++        "title": "RustMusic",
++        "width": 1280,
++        "height": 880,
++        "minWidth": 1000,
++        "minHeight": 660,
++        "center": true,
++        "decorations": true,
++        "titleBarStyle": "Overlay",
++        "hiddenTitle": true,
++        "trafficLightPosition": { "x": 16, "y": 18 },
++        "transparent": false,
++        "resizable": true,
++        "dragDropEnabled": true,
++        "backgroundColor": "#0b0b10",
++        "shadow": true
++      }
++    ]
++  },
++  "bundle": {
++    "targets": ["app", "dmg"]
++  }
++}
+diff --git a/src/components/Sidebar.liquid.tsx b/src/components/Sidebar.liquid.tsx
+index 5db923e..44524ca 100644
+--- a/src/components/Sidebar.liquid.tsx
++++ b/src/components/Sidebar.liquid.tsx
+@@ -88,7 +88,7 @@ export default function Sidebar() {
+   const mins = Math.floor((totalDuration % 3600) / 60);
+ 
+   return (
+-    <aside className="w-[242px] shrink-0 mt-2 ml-2 mb-2 rounded-2xl glass flex flex-col px-3.5 pt-3 pb-3 relative z-20">
++    <aside className="app-sidebar app-sidebar-card w-[242px] shrink-0 mt-2 ml-2 mb-2 rounded-2xl glass flex flex-col px-3.5 pt-3 pb-3 relative z-20">
+       {/* 品牌区（与桌面图标同构的黑胶 logo） */}
+       <div className="flex items-center gap-3.5 px-3 pt-2 pb-5">
+         <div className="relative group">
+diff --git a/src/components/Sidebar.skeuo.tsx b/src/components/Sidebar.skeuo.tsx
+index cbae852..6ddd452 100644
+--- a/src/components/Sidebar.skeuo.tsx
++++ b/src/components/Sidebar.skeuo.tsx
+@@ -81,7 +81,7 @@ export default function Sidebar() {
+   );
+ 
+   return (
+-    <aside className="w-[236px] shrink-0 flex flex-col px-3.5 pt-3 relative z-20 border-r border-[var(--sk-divider)] shadow-[inset_-1px_0_0_var(--sk-divider-hi)]">
++    <aside className="app-sidebar w-[236px] shrink-0 flex flex-col px-3.5 pt-3 relative z-20 border-r border-[var(--sk-divider)] shadow-[inset_-1px_0_0_var(--sk-divider-hi)]">
+       {/* 拟物金属铭牌品牌区 */}
+       <div className="skeuo-nameplate mt-2 mb-4 px-3.5 py-2.5 rounded-xl flex items-center gap-3">
+         <Logo size={38} />
+diff --git a/src/components/Sidebar.standard.tsx b/src/components/Sidebar.standard.tsx
+index 77d1a08..6bf0d2a 100644
+--- a/src/components/Sidebar.standard.tsx
++++ b/src/components/Sidebar.standard.tsx
+@@ -88,7 +88,7 @@ export default function Sidebar() {
+   const mins = Math.floor((totalDuration % 3600) / 60);
+ 
+   return (
+-    <aside className="w-[236px] shrink-0 flex flex-col px-4 pt-3 relative z-20">
++    <aside className="app-sidebar w-[236px] shrink-0 flex flex-col px-4 pt-3 relative z-20">
+       {/* 品牌区（与桌面图标同构的黑胶 logo） */}
+       <div className="flex items-center gap-3.5 px-3 pt-2 pb-6">
+         <Logo size={44} />
+diff --git a/src/components/Titlebar.liquid.tsx b/src/components/Titlebar.liquid.tsx
+index 1605ff7..4303633 100644
+--- a/src/components/Titlebar.liquid.tsx
++++ b/src/components/Titlebar.liquid.tsx
+@@ -32,7 +32,7 @@ export default function Titlebar() {
+ 
+       {/* 窗口控制按钮：无边框容器的幽灵按钮组（与全局 hover 语言一致），
+           顶/右缘与内容卡片对齐（8px 外框） */}
+-      <div className="absolute top-2 right-2 flex items-center gap-0.5 h-8 z-[56] px-1">
++      <div className="win-btns absolute top-2 right-2 flex items-center gap-0.5 h-8 z-[56] px-1">
+         <button
+           className="titlebar-btn w-8 h-7 rounded-lg flex items-center justify-center text-[var(--ink-2)] hover:bg-[var(--shade-strong)] hover:text-[var(--ink)] active:scale-90 transition-all"
+           onClick={() => win.minimize()}
+diff --git a/src/components/Titlebar.skeuo.tsx b/src/components/Titlebar.skeuo.tsx
+index ff2a6ab..1c58133 100644
+--- a/src/components/Titlebar.skeuo.tsx
++++ b/src/components/Titlebar.skeuo.tsx
+@@ -29,7 +29,7 @@ export default function Titlebar() {
+       />
+ 
+       {/* 拟物金属按键窗口控制区 */}
+-      <div className="absolute top-1.5 right-3 flex items-center gap-1.5 h-7 z-[56]">
++      <div className="win-btns absolute top-1.5 right-3 flex items-center gap-1.5 h-7 z-[56]">
+         <button
+           className="titlebar-btn"
+           onClick={() => win.minimize()}
+diff --git a/src/components/Titlebar.standard.tsx b/src/components/Titlebar.standard.tsx
+index 6bee7ac..347f7b6 100644
+--- a/src/components/Titlebar.standard.tsx
++++ b/src/components/Titlebar.standard.tsx
+@@ -32,7 +32,7 @@ export default function Titlebar() {
+       />
+ 
+       {/* 窗口控制按钮（右上角悬浮，压在热区之上、内容区右上角留白处） */}
+-      <div className="absolute top-0 right-0 flex items-center h-9 z-[56]">
++      <div className="win-btns absolute top-0 right-0 flex items-center h-9 z-[56]">
+         <button
+           className="titlebar-btn w-11 h-9 flex items-center justify-center text-[var(--ink-2)] hover:bg-[var(--shade)] hover:text-[var(--ink)] transition-colors"
+           onClick={() => win.minimize()}
+diff --git a/src/desktop-lyrics/main.tsx b/src/desktop-lyrics/main.tsx
+index 990b895..85521d5 100644
+--- a/src/desktop-lyrics/main.tsx
++++ b/src/desktop-lyrics/main.tsx
+@@ -52,7 +52,10 @@ document.body.style.background = "transparent";
+ /* Linux：WebKitGTK 的窗口透明在部分显卡/驱动（虚拟机 vmwgfx 等）上不可用，
+    透明背景会渲染成整块灰/黑阴影。Linux 一律用实色底（悬浮栏形态），
+    显示效果在任何机器上都确定；Windows 保持纯悬浮文字形态不变 */
+-const IS_LINUX = !/windows/i.test(navigator.userAgent);
++const UA = navigator.userAgent;
++const IS_WINDOWS = /windows/i.test(UA);
++const IS_MACOS = /macintosh|mac os x/i.test(UA);
++const IS_LINUX = !IS_WINDOWS && !IS_MACOS;
+ // 虚拟机（后端已禁用 WebKit 合成）走透明悬浮形态：URL 带 transparent=1
+ const TRANSPARENT =
+   !IS_LINUX || new URLSearchParams(location.search).get("transparent") === "1";
+@@ -418,7 +421,11 @@ function DesktopLyrics() {
+             className="text-[13px] w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+             style={{ color: "rgba(255,255,255,0.85)" }}
+             onClick={toggleLock}
+-            title="锁定：鼠标穿透歌词窗口（控制条随之隐藏），主窗口按 L 或托盘菜单解锁"
++            title={
++              IS_MACOS
++                ? "锁定：鼠标穿透歌词窗口（控制条随之隐藏），主窗口按 L 解锁"
++                : "锁定：鼠标穿透歌词窗口（控制条随之隐藏），主窗口按 L 或托盘菜单解锁"
++            }
+           >
+             🔓
+           </button>
+diff --git a/src/index.css b/src/index.css
+index a285013..ce07a84 100644
+--- a/src/index.css
++++ b/src/index.css
+@@ -70,3 +70,21 @@
+   animation-play-state: paused !important;
+ }
+ 
++
++/* ===== macOS 平台差异 =====
++   macOS 走系统原生标题栏（decorations: true + titleBarStyle Overlay + 隐藏标题），
++   红绿灯由系统绘制在左上角：隐藏自绘的右上角窗口按钮，侧栏让出红绿灯高度。 */
++html[data-platform="macos"] .win-btns {
++  display: none;
++}
++
++/* 侧栏（standard / skeuo 形态）：顶部让出 34px，品牌区不再压在红绿灯下面 */
++html[data-platform="macos"] .app-sidebar {
++  padding-top: 34px;
++}
++
++/* 液态玻璃形态的侧栏是一张整卡：整卡下移，避免红绿灯压在卡片圆角上 */
++html[data-platform="macos"] .app-sidebar-card {
++  margin-top: 40px;
++  padding-top: 12px;
++}
+diff --git a/src/main.tsx b/src/main.tsx
+index 981c16d..d2aa007 100644
+--- a/src/main.tsx
++++ b/src/main.tsx
+@@ -8,10 +8,13 @@ import { applySkin, loadSkin } from "./skins";
+ initTheme();
+ applySkin(loadSkin());
+ // 平台标记（CSS 按平台差异化）。UA 即时可得，无异步闪烁；
+-// Windows WebView2 恒含 "Windows NT"
+-document.documentElement.dataset.platform = /windows/i.test(navigator.userAgent)
++// Windows WebView2 恒含 "Windows NT"，macOS WKWebView 恒含 "Macintosh"
++const ua = navigator.userAgent;
++document.documentElement.dataset.platform = /windows/i.test(ua)
+   ? "windows"
+-  : "linux";
++  : /macintosh|mac os x/i.test(ua)
++    ? "macos"
++    : "linux";
+ 
+ ReactDOM.createRoot(document.getElementById("root")!).render(
+   <React.StrictMode>
+diff --git a/src/utils.ts b/src/utils.ts
+index 4f57a27..65742af 100644
+--- a/src/utils.ts
++++ b/src/utils.ts
+@@ -1,5 +1,17 @@
+ import type { LyricsPayload, LyricLine, TrackMeta } from "./types";
+ 
++/**
++ * 当前运行平台是否为 macOS。
++ * 读 documentElement.dataset.platform（main.tsx 渲染前按 UA 写入），
++ * 必须是函数而非模块级常量：模块求值早于 main.tsx 里的赋值。
++ */
++export function isMacOS(): boolean {
++  return (
++    typeof document !== "undefined" &&
++    document.documentElement.dataset.platform === "macos"
++  );
++}
++
+ /** 当前播放位置对应的歌词行（无同步歌词返回 null） */
+ export function fmtTime(ms: number): string {
+   if (!isFinite(ms) || ms <= 0) return "0:00";
+diff --git a/src/views/NavidromePanel.liquid.tsx b/src/views/NavidromePanel.liquid.tsx
+index 9d3fc06..f54a127 100644
+--- a/src/views/NavidromePanel.liquid.tsx
++++ b/src/views/NavidromePanel.liquid.tsx
+@@ -19,7 +19,7 @@ import { useLocatePill } from "../hooks/useLocatePill";
+ import { useVirtualWindow } from "../hooks/useVirtualWindow";
+ import LocateCurrentPill from "../components/LocateCurrentPill";
+ import type { NdAlbum, NdSong } from "../types";
+-import { clampMenuPos, fmtTime } from "../utils";
++import { clampMenuPos, fmtTime, isMacOS } from "../utils";
+ import Modal from "../components/Modal";
+ 
+ const LS_SERVER = "navidrome.ui.server";
+@@ -423,7 +423,7 @@ export default function NavidromePanel() {
+               value={password}
+               onChange={(e) => setPassword(e.target.value)}
+               onKeyDown={(e) => e.key === "Enter" && connect()}
+-              placeholder="密码（保存在系统凭据管理器）"
++              placeholder={isMacOS() ? "密码（仅保存在本机）" : "密码（保存在系统凭据管理器）"}
+               className="w-full h-10 rounded-xl liquid-input px-3.5 text-[12.5px] text-[var(--ink)] placeholder:text-[var(--ink-3)] outline-none focus:border-[var(--accent)]"
+             />
+             <button className="btn-primary h-10" onClick={connect} disabled={connecting}>
+@@ -432,8 +432,9 @@ export default function NavidromePanel() {
+             </button>
+           </div>
+           <div className="text-[11px] text-[var(--ink-3)] max-w-[360px] text-center leading-relaxed">
+-            兼容 Navidrome 及所有 Subsonic API 服务器。密码仅保存在本机系统
+-            凭据管理器中（Windows 凭据管理器 / Linux Secret Service），不上传、不落明文。
++            {isMacOS()
++              ? "兼容 Navidrome 及所有 Subsonic API 服务器。密码仅保存在本机应用数据目录（仅当前用户可读），不上传。"
++              : "兼容 Navidrome 及所有 Subsonic API 服务器。密码仅保存在本机系统凭据管理器中（Windows 凭据管理器 / Linux Secret Service），不上传、不落明文。"}
+           </div>
+         </div>
+       ) : (
+diff --git a/src/views/NavidromePanel.skeuo.tsx b/src/views/NavidromePanel.skeuo.tsx
+index 7862f63..12dc39f 100644
+--- a/src/views/NavidromePanel.skeuo.tsx
++++ b/src/views/NavidromePanel.skeuo.tsx
+@@ -19,7 +19,7 @@ import { useLocatePill } from "../hooks/useLocatePill";
+ import { useVirtualWindow } from "../hooks/useVirtualWindow";
+ import LocateCurrentPill from "../components/LocateCurrentPill";
+ import type { NdAlbum, NdSong } from "../types";
+-import { clampMenuPos, fmtTime } from "../utils";
++import { clampMenuPos, fmtTime, isMacOS } from "../utils";
+ import Modal from "../components/Modal";
+ 
+ const LS_SERVER = "navidrome.ui.server";
+@@ -423,7 +423,7 @@ export default function NavidromePanel() {
+               value={password}
+               onChange={(e) => setPassword(e.target.value)}
+               onKeyDown={(e) => e.key === "Enter" && connect()}
+-              placeholder="密码（保存在系统凭据管理器）"
++              placeholder={isMacOS() ? "密码（仅保存在本机）" : "密码（保存在系统凭据管理器）"}
+               className="w-full h-10 rounded-xl bg-[var(--shade)] border border-[var(--line)] px-3.5 text-[12.5px] text-[var(--ink)] placeholder:text-[var(--ink-3)]"
+             />
+             <button className="btn-primary h-10" onClick={connect} disabled={connecting}>
+@@ -432,8 +432,9 @@ export default function NavidromePanel() {
+             </button>
+           </div>
+           <div className="text-[11px] text-[var(--ink-3)] max-w-[360px] text-center leading-relaxed">
+-            兼容 Navidrome 及所有 Subsonic API 服务器。密码仅保存在本机系统
+-            凭据管理器中（Windows 凭据管理器 / Linux Secret Service），不上传、不落明文。
++            {isMacOS()
++              ? "兼容 Navidrome 及所有 Subsonic API 服务器。密码仅保存在本机应用数据目录（仅当前用户可读），不上传。"
++              : "兼容 Navidrome 及所有 Subsonic API 服务器。密码仅保存在本机系统凭据管理器中（Windows 凭据管理器 / Linux Secret Service），不上传、不落明文。"}
+           </div>
+         </div>
+       ) : (
+diff --git a/src/views/NavidromePanel.standard.tsx b/src/views/NavidromePanel.standard.tsx
+index d9e8e38..5df0465 100644
+--- a/src/views/NavidromePanel.standard.tsx
++++ b/src/views/NavidromePanel.standard.tsx
+@@ -19,7 +19,7 @@ import { useLocatePill } from "../hooks/useLocatePill";
+ import { useVirtualWindow } from "../hooks/useVirtualWindow";
+ import LocateCurrentPill from "../components/LocateCurrentPill";
+ import type { NdAlbum, NdSong } from "../types";
+-import { clampMenuPos, fmtTime } from "../utils";
++import { clampMenuPos, fmtTime, isMacOS } from "../utils";
+ import Modal from "../components/Modal";
+ 
+ const LS_SERVER = "navidrome.ui.server";
+@@ -423,7 +423,7 @@ export default function NavidromePanel() {
+               value={password}
+               onChange={(e) => setPassword(e.target.value)}
+               onKeyDown={(e) => e.key === "Enter" && connect()}
+-              placeholder="密码（保存在系统凭据管理器）"
++              placeholder={isMacOS() ? "密码（仅保存在本机）" : "密码（保存在系统凭据管理器）"}
+               className="w-full h-10 rounded-xl bg-[var(--shade)] border border-[var(--line)] px-3.5 text-[12.5px] text-[var(--ink)] placeholder:text-[var(--ink-3)]"
+             />
+             <button className="btn-primary h-10" onClick={connect} disabled={connecting}>
+@@ -432,8 +432,9 @@ export default function NavidromePanel() {
+             </button>
+           </div>
+           <div className="text-[11px] text-[var(--ink-3)] max-w-[360px] text-center leading-relaxed">
+-            兼容 Navidrome 及所有 Subsonic API 服务器。密码仅保存在本机系统
+-            凭据管理器中（Windows 凭据管理器 / Linux Secret Service），不上传、不落明文。
++            {isMacOS()
++              ? "兼容 Navidrome 及所有 Subsonic API 服务器。密码仅保存在本机应用数据目录（仅当前用户可读），不上传。"
++              : "兼容 Navidrome 及所有 Subsonic API 服务器。密码仅保存在本机系统凭据管理器中（Windows 凭据管理器 / Linux Secret Service），不上传、不落明文。"}
+           </div>
+         </div>
+       ) : (
+diff --git a/src/views/SettingsView.liquid.tsx b/src/views/SettingsView.liquid.tsx
+index 52109f0..9c9f39a 100644
+--- a/src/views/SettingsView.liquid.tsx
++++ b/src/views/SettingsView.liquid.tsx
+@@ -1,4 +1,5 @@
+ import { useEffect, useMemo, useState } from "react";
++import { isMacOS } from "../utils";
+ import {
+   Folder,
+   FolderOpen,
+@@ -266,7 +267,7 @@ export default function SettingsView() {
+             <div className="flex items-center gap-1.5">
+               {(
+                 [
+-                  { key: "tray", label: "最小化到托盘" },
++                  { key: "tray", label: isMacOS() ? "最小化到菜单栏" : "最小化到托盘" },
+                   { key: "exit", label: "直接退出应用" },
+                 ] as const
+               ).map((o) => (
+@@ -288,7 +289,9 @@ export default function SettingsView() {
+             </div>
+           </div>
+           <p className="text-[11.5px] text-[var(--ink-3)] mt-2">
+-            最小化到托盘后音乐继续播放，从任务栏托盘图标可重新打开主界面或完全退出。
++            {isMacOS()
++              ? "隐藏后音乐继续播放：点 Dock 图标或菜单栏图标可重新打开主界面，⌘Q 完全退出。"
++              : "最小化到托盘后音乐继续播放，从任务栏托盘图标可重新打开主界面或完全退出。"}
+           </p>
+         </section>
+ 
+@@ -616,10 +619,10 @@ export default function SettingsView() {
+                       onClick={() =>
+                         api.openFolder(f.path).catch((e) => useStore.getState().toast(String(e), "error"))
+                       }
+-                      title="在文件管理器中打开"
++                      title={isMacOS() ? "在访达中显示" : "在文件管理器中打开"}
+                     >
+                       <FolderOpen size={13} />
+-                      在文件管理器中打开
++                      {isMacOS() ? "在访达中显示" : "在文件管理器中打开"}
+                     </button>
+                     <button
+                       className="btn-secondary !py-1 !px-2.5 text-[12px] flex items-center gap-1.5 hover:!text-rose-400"
+@@ -901,10 +904,10 @@ export default function SettingsView() {
+                     api.openFolder(target).catch((e) => useStore.getState().toast(String(e), "error"));
+                   }
+                 }}
+-                title="在资源管理器中显示"
++                title={isMacOS() ? "在访达中显示" : "在资源管理器中显示"}
+               >
+                 <FolderOpen size={13} />
+-                在资源管理器中显示
++                {isMacOS() ? "在访达中显示" : "在资源管理器中显示"}
+               </button>
+               <button className="btn-secondary !py-1.5 !px-3" onClick={pickSaveDir}>
+                 更改目录
+@@ -1001,13 +1004,17 @@ export default function SettingsView() {
+             </span>
+           </div>
+           <p className="text-[11.5px] text-[var(--ink-3)] mt-2">
+-            发现新版本时会展示更新说明，确认后自动下载并原地安装（不改变安装位置），完成后自动重启应用。
++            {isMacOS()
++              ? "发现新版本时会展示更新说明，确认后打开 GitHub 发布页下载 dmg 手动安装（macOS 版不内置自动安装）。"
++              : "发现新版本时会展示更新说明，确认后自动下载并原地安装（不改变安装位置），完成后自动重启应用。"}
+           </p>
+         </section>
+ 
+         <div className="text-[11.5px] text-[var(--ink-3)] px-1 pb-2">
+           RustMusic {appVersion ? `v${appVersion}` : ""} · Rust + Tauri 2 + React ·
+-          引擎 rodio / symphonia · 界面支持 Windows / Linux（WASAPI 独占输出仅 Windows）
++          引擎 rodio / symphonia · {isMacOS()
++            ? "界面支持 Windows / macOS / Linux（WASAPI 独占输出仅 Windows）"
++            : "界面支持 Windows / Linux（WASAPI 独占输出仅 Windows）"}
+         </div>
+       </div>
+     </div>
+diff --git a/src/views/SettingsView.skeuo.tsx b/src/views/SettingsView.skeuo.tsx
+index dbbe18f..bc5f131 100644
+--- a/src/views/SettingsView.skeuo.tsx
++++ b/src/views/SettingsView.skeuo.tsx
+@@ -1,4 +1,5 @@
+ import { useEffect, useMemo, useState } from "react";
++import { isMacOS } from "../utils";
+ import {
+   Folder,
+   FolderOpen,
+@@ -266,7 +267,7 @@ export default function SettingsView() {
+             <div className="skeuo-segmented">
+               {(
+                 [
+-                  { key: "tray", label: "最小化到托盘" },
++                  { key: "tray", label: isMacOS() ? "最小化到菜单栏" : "最小化到托盘" },
+                   { key: "exit", label: "直接退出应用" },
+                 ] as const
+               ).map((o) => (
+@@ -281,7 +282,9 @@ export default function SettingsView() {
+             </div>
+           </div>
+           <p className="text-[11.5px] text-[var(--ink-3)] mt-2">
+-            最小化到托盘后音乐继续播放，从任务栏托盘图标可重新打开主界面或完全退出。
++            {isMacOS()
++              ? "隐藏后音乐继续播放：点 Dock 图标或菜单栏图标可重新打开主界面，⌘Q 完全退出。"
++              : "最小化到托盘后音乐继续播放，从任务栏托盘图标可重新打开主界面或完全退出。"}
+           </p>
+         </section>
+ 
+@@ -587,10 +590,10 @@ export default function SettingsView() {
+                       onClick={() =>
+                         api.openFolder(f.path).catch((e) => useStore.getState().toast(String(e), "error"))
+                       }
+-                      title="在文件管理器中打开"
++                      title={isMacOS() ? "在访达中显示" : "在文件管理器中打开"}
+                     >
+                       <FolderOpen size={13} />
+-                      在文件管理器中打开
++                      {isMacOS() ? "在访达中显示" : "在文件管理器中打开"}
+                     </button>
+                     <button
+                       className="btn-secondary !py-1 !px-2.5 text-[12px] flex items-center gap-1.5 hover:!text-rose-400"
+@@ -844,10 +847,10 @@ export default function SettingsView() {
+                     api.openFolder(target).catch((e) => useStore.getState().toast(String(e), "error"));
+                   }
+                 }}
+-                title="在资源管理器中显示"
++                title={isMacOS() ? "在访达中显示" : "在资源管理器中显示"}
+               >
+                 <FolderOpen size={13} />
+-                在资源管理器中显示
++                {isMacOS() ? "在访达中显示" : "在资源管理器中显示"}
+               </button>
+               <button className="btn-secondary !py-1.5 !px-3" onClick={pickSaveDir}>
+                 更改目录
+@@ -934,13 +937,17 @@ export default function SettingsView() {
+             </span>
+           </div>
+           <p className="text-[11.5px] text-[var(--ink-3)] mt-2">
+-            发现新版本时会展示更新说明，确认后自动下载并原地安装（不改变安装位置），完成后自动重启应用。
++            {isMacOS()
++              ? "发现新版本时会展示更新说明，确认后打开 GitHub 发布页下载 dmg 手动安装（macOS 版不内置自动安装）。"
++              : "发现新版本时会展示更新说明，确认后自动下载并原地安装（不改变安装位置），完成后自动重启应用。"}
+           </p>
+         </section>
+ 
+         <div className="text-[11.5px] text-[var(--ink-3)] px-1 pb-2">
+           RustMusic {appVersion ? `v${appVersion}` : ""} · Rust + Tauri 2 + React ·
+-          引擎 rodio / symphonia · 界面支持 Windows / Linux（WASAPI 独占输出仅 Windows）
++          引擎 rodio / symphonia · {isMacOS()
++            ? "界面支持 Windows / macOS / Linux（WASAPI 独占输出仅 Windows）"
++            : "界面支持 Windows / Linux（WASAPI 独占输出仅 Windows）"}
+         </div>
+       </div>
+     </div>
+diff --git a/src/views/SettingsView.standard.tsx b/src/views/SettingsView.standard.tsx
+index 5781d48..23535c9 100644
+--- a/src/views/SettingsView.standard.tsx
++++ b/src/views/SettingsView.standard.tsx
+@@ -1,4 +1,5 @@
+ import { useEffect, useMemo, useState } from "react";
++import { isMacOS } from "../utils";
+ import {
+   Folder,
+   FolderOpen,
+@@ -266,7 +267,7 @@ export default function SettingsView() {
+             <div className="flex items-center gap-1.5">
+               {(
+                 [
+-                  { key: "tray", label: "最小化到托盘" },
++                  { key: "tray", label: isMacOS() ? "最小化到菜单栏" : "最小化到托盘" },
+                   { key: "exit", label: "直接退出应用" },
+                 ] as const
+               ).map((o) => (
+@@ -288,7 +289,9 @@ export default function SettingsView() {
+             </div>
+           </div>
+           <p className="text-[11.5px] text-[var(--ink-3)] mt-2">
+-            最小化到托盘后音乐继续播放，从任务栏托盘图标可重新打开主界面或完全退出。
++            {isMacOS()
++              ? "隐藏后音乐继续播放：点 Dock 图标或菜单栏图标可重新打开主界面，⌘Q 完全退出。"
++              : "最小化到托盘后音乐继续播放，从任务栏托盘图标可重新打开主界面或完全退出。"}
+           </p>
+         </section>
+ 
+@@ -616,10 +619,10 @@ export default function SettingsView() {
+                       onClick={() =>
+                         api.openFolder(f.path).catch((e) => useStore.getState().toast(String(e), "error"))
+                       }
+-                      title="在文件管理器中打开"
++                      title={isMacOS() ? "在访达中显示" : "在文件管理器中打开"}
+                     >
+                       <FolderOpen size={13} />
+-                      在文件管理器中打开
++                      {isMacOS() ? "在访达中显示" : "在文件管理器中打开"}
+                     </button>
+                     <button
+                       className="btn-secondary !py-1 !px-2.5 text-[12px] flex items-center gap-1.5 hover:!text-rose-400"
+@@ -901,10 +904,10 @@ export default function SettingsView() {
+                     api.openFolder(target).catch((e) => useStore.getState().toast(String(e), "error"));
+                   }
+                 }}
+-                title="在资源管理器中显示"
++                title={isMacOS() ? "在访达中显示" : "在资源管理器中显示"}
+               >
+                 <FolderOpen size={13} />
+-                在资源管理器中显示
++                {isMacOS() ? "在访达中显示" : "在资源管理器中显示"}
+               </button>
+               <button className="btn-secondary !py-1.5 !px-3" onClick={pickSaveDir}>
+                 更改目录
+@@ -1001,13 +1004,17 @@ export default function SettingsView() {
+             </span>
+           </div>
+           <p className="text-[11.5px] text-[var(--ink-3)] mt-2">
+-            发现新版本时会展示更新说明，确认后自动下载并原地安装（不改变安装位置），完成后自动重启应用。
++            {isMacOS()
++              ? "发现新版本时会展示更新说明，确认后打开 GitHub 发布页下载 dmg 手动安装（macOS 版不内置自动安装）。"
++              : "发现新版本时会展示更新说明，确认后自动下载并原地安装（不改变安装位置），完成后自动重启应用。"}
+           </p>
+         </section>
+ 
+         <div className="text-[11.5px] text-[var(--ink-3)] px-1 pb-2">
+           RustMusic {appVersion ? `v${appVersion}` : ""} · Rust + Tauri 2 + React ·
+-          引擎 rodio / symphonia · 界面支持 Windows / Linux（WASAPI 独占输出仅 Windows）
++          引擎 rodio / symphonia · {isMacOS()
++            ? "界面支持 Windows / macOS / Linux（WASAPI 独占输出仅 Windows）"
++            : "界面支持 Windows / Linux（WASAPI 独占输出仅 Windows）"}
+         </div>
+       </div>
+     </div>
