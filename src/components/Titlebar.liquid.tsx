@@ -32,7 +32,7 @@ export default function Titlebar() {
 
       {/* 窗口控制按钮：无边框容器的幽灵按钮组（与全局 hover 语言一致），
           顶/右缘与内容卡片对齐（8px 外框） */}
-      <div className="absolute top-2 right-2 flex items-center gap-0.5 h-8 z-[56] px-1">
+      <div className="win-btns absolute top-2 right-2 flex items-center gap-0.5 h-8 z-[56] px-1">
         <button
           className="titlebar-btn w-8 h-7 rounded-lg flex items-center justify-center text-[var(--ink-2)] hover:bg-[var(--shade-strong)] hover:text-[var(--ink)] active:scale-90 transition-all"
           onClick={() => win.minimize()}

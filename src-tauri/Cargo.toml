@@ -18,13 +18,16 @@ custom-protocol = ["tauri/custom-protocol"]
 tauri-build = { version = "~2.6", features = [] }
 
 [dependencies]
-tauri = { version = "~2.11", features = ["tray-icon", "protocol-asset"] }
+# macos-private-api：桌面歌词窗口在 macOS 上只有走私有 API 才能真正透明（其它平台忽略）
+# image-png：菜单栏模板图标走 Image::from_bytes 解码
+tauri = { version = "~2.11", features = ["tray-icon", "protocol-asset", "macos-private-api", "image-png"] }
 tauri-plugin-dialog = "~2.7"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 # symphonia-wav 只注册 WAV 容器解析（symphonia/format-riff），
 # PCM 解码器在独立的 symphonia-pcm feature 里，缺它 WAV 会报 UnrecognizedFormat
-rodio = { version = "0.22", default-features = false, features = ["playback", "symphonia-mp3", "symphonia-aac", "symphonia-isomp4", "symphonia-vorbis", "symphonia-wav", "symphonia-pcm", "flac"] }
+# symphonia-vorbis 只注册解码器，OGG 容器解析在 symphonia-ogg 里，缺它 .ogg 报 UnrecognizedFormat
+rodio = { version = "0.22", default-features = false, features = ["playback", "symphonia-mp3", "symphonia-aac", "symphonia-isomp4", "symphonia-vorbis", "symphonia-ogg", "symphonia-wav", "symphonia-pcm", "flac"] }
 lofty = "0.22"
 rusqlite = { version = "0.32", features = ["bundled"] }
 walkdir = "2"
@@ -50,8 +53,9 @@ hex = "0.4"
 num-bigint = "0.4"
 rand = "0.8"
 # 凭据管理：按平台启用后端（Windows=凭据管理器；Linux=Secret Service，
-# zbus 实现纯 Rust 无 C 依赖；crypto-rust 避免 openssl-sys）
-keyring = { version = "~3.6", default-features = false }
+# zbus 实现纯 Rust 无 C 依赖；crypto-rust 避免 openssl-sys）。
+# macOS 不引入 keyring：钥匙串条目 ACL 绑定代码签名 cdhash，ad-hoc 签名每次
+# 构建/升级都会变，读自己的条目会弹密码框并卡住启动 → 见 src/secret_store.rs
 qrcode = { version = "0.14", default-features = false, features = ["image"] }
 filetime = "0.2"
 # .lrc 歌词文件的 GBK/GB18030 编码支持（Windows 记事本圈常见编码）

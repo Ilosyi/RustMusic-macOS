@@ -109,8 +109,16 @@ pub(crate) fn setup_tray(app: &AppHandle) -> tauri::Result<()> {
         update_dlyrics_tray(&app_closed);
     });
 
+    // macOS 菜单栏走"模板图"：黑白单色 + 系统按亮/暗外观自动反相。
+    // 彩色 app 图标塞进菜单栏会糊成一团脏色，也不会跟随外观切换
+    #[cfg(target_os = "macos")]
+    let tray_icon = tauri::image::Image::from_bytes(include_bytes!("../icons/tray-template.png"))?;
+    #[cfg(not(target_os = "macos"))]
+    let tray_icon = app.default_window_icon().expect("missing app icon").clone();
+
     TrayIconBuilder::with_id("main-tray")
-        .icon(app.default_window_icon().expect("missing app icon").clone())
+        .icon(tray_icon)
+        .icon_as_template(cfg!(target_os = "macos"))
         .tooltip("RustMusic")
         .menu(&menu)
         .show_menu_on_left_click(false)

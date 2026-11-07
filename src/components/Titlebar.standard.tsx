@@ -32,7 +32,7 @@ export default function Titlebar() {
       />
 
       {/* 窗口控制按钮（右上角悬浮，压在热区之上、内容区右上角留白处） */}
-      <div className="absolute top-0 right-0 flex items-center h-9 z-[56]">
+      <div className="win-btns absolute top-0 right-0 flex items-center h-9 z-[56]">
         <button
           className="titlebar-btn w-11 h-9 flex items-center justify-center text-[var(--ink-2)] hover:bg-[var(--shade)] hover:text-[var(--ink)] transition-colors"
           onClick={() => win.minimize()}

@@ -88,7 +88,7 @@ export default function Sidebar() {
   const mins = Math.floor((totalDuration % 3600) / 60);
 
   return (
-    <aside className="w-[242px] shrink-0 mt-2 ml-2 mb-2 rounded-2xl glass flex flex-col px-3.5 pt-3 pb-3 relative z-20">
+    <aside className="app-sidebar app-sidebar-card w-[242px] shrink-0 mt-2 ml-2 mb-2 rounded-2xl glass flex flex-col px-3.5 pt-3 pb-3 relative z-20">
       {/* 品牌区（与桌面图标同构的黑胶 logo） */}
       <div className="flex items-center gap-3.5 px-3 pt-2 pb-5">
         <div className="relative group">

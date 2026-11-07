@@ -507,6 +507,15 @@ pub async fn desktop_lyrics_open(app: AppHandle) -> Result<(), String> {
             .transparent(true)
             .background_color(tauri::utils::config::Color(0, 0, 0, 0));
     }
+    // macOS：WKWebView 透明窗口（依赖 macos-private-api 特性），
+    // 同时让歌词窗跟随所有 Space——桌面歌词挂在当前桌面之外就失去意义
+    #[cfg(target_os = "macos")]
+    {
+        builder = builder
+            .transparent(true)
+            .background_color(tauri::utils::config::Color(0, 0, 0, 0))
+            .visible_on_all_workspaces(true);
+    }
     // Windows：透明窗口 + WebView2 alpha=0 背景（纯悬浮文字形态）
     #[cfg(windows)]
     {

@@ -70,3 +70,21 @@
   animation-play-state: paused !important;
 }
 
+
+/* ===== macOS 平台差异 =====
+   macOS 走系统原生标题栏（decorations: true + titleBarStyle Overlay + 隐藏标题），
+   红绿灯由系统绘制在左上角：隐藏自绘的右上角窗口按钮，侧栏让出红绿灯高度。 */
+html[data-platform="macos"] .win-btns {
+  display: none;
+}
+
+/* 侧栏（standard / skeuo 形态）：顶部让出 34px，品牌区不再压在红绿灯下面 */
+html[data-platform="macos"] .app-sidebar {
+  padding-top: 34px;
+}
+
+/* 液态玻璃形态的侧栏是一张整卡：整卡下移，避免红绿灯压在卡片圆角上 */
+html[data-platform="macos"] .app-sidebar-card {
+  margin-top: 40px;
+  padding-top: 12px;
+}

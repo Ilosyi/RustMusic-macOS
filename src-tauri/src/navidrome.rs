@@ -2,7 +2,8 @@
 //!
 //! 连接用户自建的 Navidrome / Subsonic 服务器：搜索、专辑浏览、播放流。
 //! 认证采用 Subsonic 标准的 salt+token 方案（token = md5(密码 + salt)）；
-//! **密码保存在系统凭据管理器**（keyring：Windows 凭据管理器 / Linux Secret Service），不落数据库、不进前端。
+//! **密码保存在系统凭据管理器**（Windows 凭据管理器 / Linux Secret Service / macOS 本地 0600 文件，
+//! 统一走 crate::secret_store），不落数据库、不进前端。
 
 use md5::{Digest as Md5Digest, Md5};
 use rand::Rng;
@@ -15,30 +16,25 @@ const API_VER: &str = "1.16.1";
 
 // ---------- 凭据管理器 ----------
 
-fn keyring_entry(server: &str, username: &str) -> Result<keyring::Entry, String> {
-    // 键统一用归一化后的服务器名（补 scheme、去尾斜杠），
-    // 避免"存的是 http://…、取的是原始输入"导致键对不上
-    let server = norm_base(server);
-    keyring::Entry::new("RustMusic Navidrome", &format!("{server}|{username}"))
-        .map_err(|e| format!("凭据管理器不可用: {e}"))
+const NAV_SERVICE: &str = "RustMusic Navidrome";
+
+/// 凭据账号键：归一化后的服务器名 + 用户名。
+/// 统一用归一化后的服务器名（补 scheme、去尾斜杠），
+/// 避免"存的是 http://…、取的是原始输入"导致键对不上
+fn store_account(server: &str, username: &str) -> String {
+    format!("{}|{username}", norm_base(server))
 }
 
 /// 密码存入 Windows 凭据管理器
 pub fn save_password(server: &str, username: &str, password: &str) -> Result<(), String> {
-    keyring_entry(server, username)?
-        .set_password(password)
-        .map_err(|e| format!("凭据保存失败: {e}"))?;
+    crate::secret_store::set(NAV_SERVICE, &store_account(server, username), password)?;
     pw_cache_invalidate(server, username);
     Ok(())
 }
 
 /// 从凭据管理器删除密码
 pub fn delete_password(server: &str, username: &str) -> Result<(), String> {
-    let r = match keyring_entry(server, username)?.delete_credential() {
-        Ok(()) => Ok(()),
-        Err(keyring::Error::NoEntry) => Ok(()),
-        Err(e) => Err(format!("凭据删除失败: {e}")),
-    };
+    let r = crate::secret_store::delete(NAV_SERVICE, &store_account(server, username));
     pw_cache_invalidate(server, username);
     r
 }
@@ -65,9 +61,8 @@ fn get_password(server: &str, username: &str) -> Result<String, String> {
             return Ok(hit.clone());
         }
     }
-    let pw = keyring_entry(server, username)?
-        .get_password()
-        .map_err(|_| "未找到保存的密码，请重新保存连接".to_string())?;
+    let pw = crate::secret_store::get(NAV_SERVICE, &store_account(server, username))
+        .ok_or_else(|| "未找到保存的密码，请重新保存连接".to_string())?;
     if let Ok(mut m) = pw_cache().lock() {
         m.insert(key, pw.clone());
     }

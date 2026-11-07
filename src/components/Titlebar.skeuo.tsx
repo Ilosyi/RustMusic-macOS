@@ -29,7 +29,7 @@ export default function Titlebar() {
       />
 
       {/* 拟物金属按键窗口控制区 */}
-      <div className="absolute top-1.5 right-3 flex items-center gap-1.5 h-7 z-[56]">
+      <div className="win-btns absolute top-1.5 right-3 flex items-center gap-1.5 h-7 z-[56]">
         <button
           className="titlebar-btn"
           onClick={() => win.minimize()}

@@ -1,4 +1,5 @@
-//! 登录凭据存取：平台 token 统一走系统凭据管理器（keyring），不再明文落库。
+//! 登录凭据存取：平台 token 统一走系统凭据管理器（macOS 走 secret_store 的
+//! 本地 0600 文件，原因见 secret_store.rs 模块注释），不再明文落库。
 //! SQLite 只保留非敏感字段（昵称、uid 等）。
 //!
 //! 旧版本把 token 明文写在 settings 表；启动时 migrate_legacy 迁入
@@ -22,28 +23,14 @@ const KEYS: [&str; 5] = [
     "bili_buvid3",
 ];
 
-fn entry(key: &str) -> Result<keyring::Entry, String> {
-    keyring::Entry::new(SERVICE, key).map_err(|e| format!("凭据管理器不可用: {e}"))
-}
-
 /// 读取平台 token；无凭据返回 None（含空串视为无）
 pub fn get(key: &str) -> Option<String> {
-    let v = entry(key).ok()?.get_password().ok()?;
-    Some(v).filter(|s| !s.is_empty())
+    crate::secret_store::get(SERVICE, key)
 }
 
 /// 写入平台 token（空串 = 清除）
 pub fn set(key: &str, value: &str) -> Result<(), String> {
-    let e = entry(key)?;
-    if value.is_empty() {
-        match e.delete_credential() {
-            Ok(()) => Ok(()),
-            Err(keyring::Error::NoEntry) => Ok(()),
-            Err(err) => Err(format!("清除凭据失败: {err}")),
-        }
-    } else {
-        e.set_password(value).map_err(|err| format!("保存凭据失败: {err}"))
-    }
+    crate::secret_store::set(SERVICE, key, value)
 }
 
 /// 清除平台 token（幂等）

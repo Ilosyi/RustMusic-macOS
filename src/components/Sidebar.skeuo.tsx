@@ -81,7 +81,7 @@ export default function Sidebar() {
   );
 
   return (
-    <aside className="w-[236px] shrink-0 flex flex-col px-3.5 pt-3 relative z-20 border-r border-[var(--sk-divider)] shadow-[inset_-1px_0_0_var(--sk-divider-hi)]">
+    <aside className="app-sidebar w-[236px] shrink-0 flex flex-col px-3.5 pt-3 relative z-20 border-r border-[var(--sk-divider)] shadow-[inset_-1px_0_0_var(--sk-divider-hi)]">
       {/* 拟物金属铭牌品牌区 */}
       <div className="skeuo-nameplate mt-2 mb-4 px-3.5 py-2.5 rounded-xl flex items-center gap-3">
         <Logo size={38} />
