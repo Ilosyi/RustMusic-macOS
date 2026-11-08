@@ -121,5 +121,7 @@ npm install
 npm run tauri build          # 产出 src-tauri/target/release/bundle/{macos,dmg}
 ```
 
+> 本项目**不使用 GitHub Actions**：上游继承的 `.github/workflows/ci.yml` 已移除，仓库的 Actions 权限也已关闭，构建与测试全部在本机执行（`npm run tauri build` / `cd src-tauri && cargo test --bin rustmusic --locked`）。原因：那份 Windows+Linux CI 会在仓库里生成约 1.6 GB 的 Rust 编译缓存，产生按 GB-月计费的 Actions 存储费用。
+
 本地开发：`npm run tauri dev`。若要对外分发并消除 Gatekeeper 提示，需要 Apple Developer 证书做正式签名 + 公证
 （`APPLE_ID` / `APPLE_PASSWORD` / `APPLE_TEAM_ID` 或 `APPLE_API_*`），此时可去掉 `signingIdentity: "-"`。

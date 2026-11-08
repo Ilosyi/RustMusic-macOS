@@ -76,7 +76,6 @@
 ```
 ├── index.html               # 主窗口入口
 ├── desktop-lyrics.html      # 桌面歌词窗口入口（Vite 多页构建）
-├── .github/workflows/       # CI（前端类型检查 + 构建、Rust 单元测试）
 ├── src/                     # React 前端
 │   ├── components/          # 播放栏、歌词页、队列、音频律动层（AudioFxLayer）、通用组件
 │   ├── views/               # 资料库 / 播放列表 / 设置等页面
@@ -173,7 +172,7 @@ sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev
 
 （Rust 侧的其它 D-Bus 用途——MPRIS 媒体控制——走纯 Rust 的 zbus；音频输出经 cpal 走 ALSA/PipeWire，故需要 `libasound2-dev`。WebKitGTK 的 WebView 内媒体元素依赖 GStreamer 插件，建议一并安装：`sudo apt install gstreamer1.0-plugins-base gstreamer1.0-plugins-good`。）
 
-测试（与 CI 一致）：
+测试（本地执行，本项目不使用 GitHub Actions）：
 
 ```bash
 npm run build                                          # 先构建前端（tauri 上下文引用 dist）
