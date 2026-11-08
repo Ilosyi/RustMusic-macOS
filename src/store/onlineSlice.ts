@@ -33,6 +33,7 @@ type Fields = Pick<
   | "kugouLoggedIn"
   | "kugouNickname"
   | "biliCache"
+  | "baiduCache"
   | "ndCache"
   | "biliLoggedIn"
   | "biliNickname"
@@ -179,6 +180,7 @@ export const createOnlineSlice: StateCreator<Store, [], [], Fields> = (set, get)
   kugouNickname: "",
 
   biliCache: {},
+  baiduCache: {},
   ndCache: {},
   biliLoggedIn: false,
   biliNickname: "",

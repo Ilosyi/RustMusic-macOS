@@ -581,7 +581,9 @@ export default function TrackList({
                       ? "B站"
                       : e.kind === "navidrome"
                         ? "Navidrome"
-                        : "QQ音乐"}
+                        : e.kind === "baidu"
+                          ? "百度网盘"
+                          : "QQ音乐"}
               </span>
               {e.vip && !dead && (
                 <span className="text-[9.5px] px-1.5 py-0.5 rounded bg-[var(--accent-weak)] text-[var(--accent-strong)] font-bold shrink-0">

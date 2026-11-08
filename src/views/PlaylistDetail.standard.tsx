@@ -26,6 +26,7 @@ import LocateCurrentPill from "../components/LocateCurrentPill";
 import { useLocatePill } from "../hooks/useLocatePill";
 import { clampMenuPos, fmtTime, matchSearch } from "../utils";
 import CoverImg from "../components/CoverImg";
+import { useDragSelect } from "../components/useDragSelect";
 import Modal from "../components/Modal";
 import type { PlaylistEntryMeta } from "../types";
 
@@ -88,6 +89,17 @@ type DetailRow =
   | {
       entry: PlaylistEntryMeta;
       kind: "navidrome";
+      id: string;
+      name: string;
+      artist: string;
+      album: string;
+      cover: string;
+      durationMs: number;
+      liked: boolean;
+    }
+  | {
+      entry: PlaylistEntryMeta;
+      kind: "baidu";
       id: string;
       name: string;
       artist: string;
@@ -240,6 +252,14 @@ export default function PlaylistDetail({ id }: { id: number }) {
             liked: !!savedOnline[`navidrome-${e.onlineId}`],
           };
         }
+        if (e.kind === "baidu") {
+          return {
+            ...base,
+            kind: "baidu",
+            id: e.onlineId ?? "",
+            liked: !!savedOnline[`baidu-${e.onlineId}`],
+          };
+        }
         return {
           ...base,
           kind: "qq",
@@ -248,6 +268,14 @@ export default function PlaylistDetail({ id }: { id: number }) {
         };
       });
   }, [pl, tracks, search, savedOnline]);
+
+  // 批量管理：按住鼠标拖动即可连续选中（不用一行一行点）
+  const drag = useDragSelect({
+    enabled: batchMode,
+    rowids: useMemo(() => list.map((r) => r.entry.rowid), [list]),
+    sel,
+    setSel,
+  });
 
   const toggleSel = (rowid: number) => {
     setSel((prev) => {
@@ -668,8 +696,11 @@ export default function PlaylistDetail({ id }: { id: number }) {
                             : "hover:bg-[var(--shade-hover)]"
                       } ${dead ? "opacity-45" : ""}`}
                     title={dead ? `无法播放：${unavailable[`${r.kind}:${r.id}`]}` : undefined}
+                    onMouseDown={(ev) => drag.onRowMouseDown(r.entry.rowid, ev)}
+                    onMouseEnter={() => drag.onRowEnter(r.entry.rowid)}
                     onClick={() => {
-                      if (batchMode) toggleSel(r.entry.rowid);
+                      // 批量模式下由 onMouseDown 处理（拖动多选），这里不再重复切换
+                      if (batchMode) return;
                     }}
                     onDoubleClick={() => {
                       if (!batchMode) playEntries(list.map((x) => x.entry), i);
@@ -759,7 +790,9 @@ export default function PlaylistDetail({ id }: { id: number }) {
                                     ? "B站"
                                     : r.kind === "navidrome"
                                       ? "Navidrome"
-                                      : "QQ音乐"}
+                                      : r.kind === "baidu"
+                                        ? "百度网盘"
+                                        : "QQ音乐"}
                             </span>
                           )}
                           {r.kind !== "track" && r.entry.vip && !dead && (

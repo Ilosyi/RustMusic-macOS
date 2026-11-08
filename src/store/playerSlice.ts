@@ -95,7 +95,14 @@ function titleOfQueueItem(
   item: { kind: string; id: number | string },
   caches: Pick<
     Store,
-    "tracks" | "neteaseCache" | "qqCache" | "kugouCache" | "biliCache" | "ndCache" | "sources"
+    | "tracks"
+    | "neteaseCache"
+    | "qqCache"
+    | "kugouCache"
+    | "biliCache"
+    | "ndCache"
+    | "baiduCache"
+    | "sources"
   >
 ): string {
   if (item.kind === "track") {
@@ -109,6 +116,9 @@ function titleOfQueueItem(
   }
   if (item.kind === "kugou") {
     return caches.kugouCache[item.id as string]?.name ?? `酷狗 #${item.id}`;
+  }
+  if (item.kind === "baidu") {
+    return caches.baiduCache[item.id as string]?.title ?? `百度网盘 #${item.id}`;
   }
   if (item.kind === "navidrome") {
     return caches.ndCache[item.id as string]?.title ?? `Navidrome #${item.id}`;
@@ -259,6 +269,7 @@ export const createPlayerSlice: StateCreator<Store, [], [], Fields> = (set, get)
     const kugouCache = { ...get().kugouCache };
     const biliCache = { ...get().biliCache };
     const ndCache = { ...get().ndCache };
+    const baiduCache = { ...get().baiduCache };
     for (const e of entries) {
       if (e.kind === "local" && e.trackId != null) {
         queue.push({ kind: "track", id: e.trackId });
@@ -310,6 +321,16 @@ export const createPlayerSlice: StateCreator<Store, [], [], Fields> = (set, get)
           durationMs: Math.round(e.duration * 1000),
         };
         queue.push({ kind: "bilibili", id: e.onlineId });
+      } else if (e.kind === "baidu" && e.onlineId) {
+        baiduCache[e.onlineId] = {
+          fsId: e.onlineId,
+          title: e.title,
+          artist: e.artist,
+          album: e.album,
+          // media_mid 列在导入时写了扩展名（wav/flac/…），播放时用来给缓存命名
+          ext: e.mediaMid ?? "",
+        };
+        queue.push({ kind: "baidu", id: e.onlineId });
       } else if (e.kind === "navidrome" && e.onlineId) {
         ndCache[e.onlineId] = {
           title: e.title,
@@ -336,6 +357,7 @@ export const createPlayerSlice: StateCreator<Store, [], [], Fields> = (set, get)
       qqCache: capOnlineCache("qq", qqCache, get().qqCache, pinOf("qq")),
       kugouCache: capOnlineCache("kugou", kugouCache, get().kugouCache, pinOf("kugou")),
       ndCache: capOnlineCache("nd", ndCache, get().ndCache, pinOf("navidrome")),
+      baiduCache,
       biliCache: capOnlineCache("bili", biliCache, get().biliCache, pinOf("bilibili")),
       queue,
       qIndex: target,
@@ -409,6 +431,18 @@ export const createPlayerSlice: StateCreator<Store, [], [], Fields> = (set, get)
       };
       set({ biliCache: capOnlineCache("bili", biliCache, get().biliCache, pinnedIdsOf("bilibili", get())) });
       return { kind: "bilibili", id: e.onlineId };
+    }
+    if (e.kind === "baidu" && e.onlineId) {
+      const baiduCache = { ...get().baiduCache };
+      baiduCache[e.onlineId] = {
+        fsId: e.onlineId,
+        title: e.title,
+        artist: e.artist,
+        album: e.album,
+        ext: e.mediaMid ?? "",
+      };
+      set({ baiduCache });
+      return { kind: "baidu", id: e.onlineId };
     }
     if (e.kind === "navidrome" && e.onlineId) {
       const ndCache = { ...get().ndCache };
@@ -674,6 +708,23 @@ export const createPlayerSlice: StateCreator<Store, [], [], Fields> = (set, get)
           album: t.album,
           cover: t.cover,
           durationMs: t.durationMs,
+        })
+        .then(ok)
+        .catch((e) => fail(String(e)));
+    } else if (item.kind === "baidu") {
+      const t = get().baiduCache[item.id as string];
+      if (!t) {
+        fail("曲目信息缺失，请重新导入该专辑");
+        return;
+      }
+      api
+        .baiduPlay({
+          fsId: t.fsId,
+          title: t.title,
+          artist: t.artist,
+          album: t.album,
+          ext: t.ext ?? "",
+          durationMs: 0,
         })
         .then(ok)
         .catch((e) => fail(String(e)));

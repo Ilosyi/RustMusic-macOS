@@ -1,4 +1,4 @@
-# RustMusic macOS 版（0.7.2，Apple Silicon）
+# RustMusic macOS 版（0.7.3，Apple Silicon）
 
 上游项目：[LingyunStudio/RustMusic](https://github.com/LingyunStudio/RustMusic)（Tauri 2 + React + Rust，官方只发 Windows / Linux）。
 本仓库是在上游 **v0.7.1**（`3a7a452`）之上打的 macOS 适配分支，已在本机（macOS 26 / Apple Silicon / arm64）实测通过。
@@ -7,19 +7,32 @@
 
 | 文件 | 说明 |
 | --- | --- |
-| `RustMusic_0.7.2_aarch64.dmg` | 安装镜像，双击后把 RustMusic 拖进 Applications（7.3 MB） |
+| `RustMusic_0.7.3_aarch64.dmg` | 安装镜像，双击后把 RustMusic 拖进 Applications（7.3 MB） |
 | `RustMusic.app` | 已 ad-hoc 签名的应用本体，可直接拖进 /Applications |
 | `rustmusic-macos-port.patch` | 相对上游 v0.7.1 的全部改动（`git diff`，含新增文件） |
 
-SHA-256（dmg）：`4f9695afb99c112b75e797ee6da77f83cedfb82f8c6bc35b253494cd49a7910a`
+SHA-256（dmg）：`e614215d73a54fde267d1a0df39aa60daa18b2295a7c7d9ea288338b33fd5260`
 
 ## 安装 / 首次运行
 
-1. 打开 `RustMusic_0.7.2_aarch64.dmg`，把 RustMusic 拖到 Applications。
+1. 打开 `RustMusic_0.7.3_aarch64.dmg`，把 RustMusic 拖到 Applications。
 2. 首次启动若提示「无法打开，因为无法验证开发者」：右键点图标 → 打开 → 再点「打开」；或执行
    `xattr -dr com.apple.quarantine /Applications/RustMusic.app`。
    （构建是 ad-hoc 签名、未走苹果公证，这是分发方式决定的，不是包坏了。）
 3. 首次使用会正常启动，**不会**弹钥匙串密码框（见下方「凭据存储」）。
+
+## 0.7.3 新增：导入更干净、导入即进播放列表、批量拖选
+
+- **只导入音频**：扩展名白名单收敛为 `mp3 / flac / wav / ogg / oga / m4a / aac`，`mp4`、`m4b`（视频、有声书容器）
+  不再进库（之前会有 mp4 混进资料库）。已有库里的 mp4 行会被下一次启动清理掉。
+- **导入即进播放列表**：点「导入该文件夹」会把整棵目录里的曲目同时写进一个同名播放列表
+  （一个文件夹下有多张专辑时，是**一个**播放列表收录全部专辑，而不是按专辑拆成一堆列表），
+  左侧「播放列表」里立刻出现，可整体播放 / 拖选 / 从歌单移除；重复导入同一目录是合并，不会重复。
+- **历史上的导入自动补登记**：0.7.2 之前导入过的目录，打开「百度网盘」标签页时会按库里的记录补建播放列表（幂等）。
+- **播放列表里的来源标签**显示「百度网盘」（之前错误地落到「QQ音乐」）。
+- **批量管理支持按住拖动多选**：进入批量管理后，按住某一行往下（或往上）拖，即可连续选中经过的行；
+  从已选行开始拖则是连续取消选中，行为和访达 / 资源管理器一致。
+- 补了 `baidupan` 的单元测试（扩展名白名单、播放列表命名、专辑 / 歌手 / 曲名推导）。
 
 ## 0.7.2 新增：百度网盘作为原生音源
 

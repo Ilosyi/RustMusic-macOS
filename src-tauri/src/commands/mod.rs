@@ -10,7 +10,7 @@ mod lyrics;
 mod navidrome;
 mod netease;
 mod playback;
-mod playlists;
+pub(crate) mod playlists;
 mod qq;
 mod settings;
 mod sources;

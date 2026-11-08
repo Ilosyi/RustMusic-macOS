@@ -126,10 +126,22 @@ pub async fn baidu_import(
 
 #[tauri::command]
 pub async fn baidu_roots(
-    state: State<'_, AppState>,
+    app: AppHandle,
 ) -> Result<Vec<crate::baidupan::RootInfo>, String> {
-    let conn = state.db.lock();
-    Ok(crate::baidupan::roots(&conn))
+    blocking(move || {
+        let state = app.state::<AppState>();
+        let conn = state.db.lock();
+        // 每次进程内首次拉取根目录时，把已导入曲目补齐成播放列表
+        //（0.7.2 之前的导入没有登记列表；幂等，重复跑不会重复加曲）
+        static REBUILT: std::sync::Once = std::sync::Once::new();
+        REBUILT.call_once(|| {
+            if let Err(e) = crate::baidupan::rebuild_playlists(&conn) {
+                eprintln!("[baidu] 重建播放列表失败: {e}");
+            }
+        });
+        Ok(crate::baidupan::roots(&conn))
+    })
+    .await
 }
 
 #[tauri::command]

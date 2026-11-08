@@ -62,6 +62,7 @@ function crumbs(dir: string): { name: string; path: string }[] {
 
 export default function BaiduPanPanel() {
   const toast = useStore((s) => s.toast);
+  const refreshPlaylists = useStore((s) => s.refreshPlaylists);
 
   const [status, setStatus] = useState<BaiduStatus | null>(null);
   const [busy, setBusy] = useState("");
@@ -89,10 +90,12 @@ export default function BaiduPanPanel() {
     try {
       setRoots(await api.baiduRoots());
       setAlbums(await api.baiduAlbums());
+      // 首次拉根目录时后端会把历史导入补登记成播放列表，这里顺带刷新左侧列表
+      await refreshPlaylists();
     } catch (e) {
       toast(String(e), "error");
     }
-  }, [toast]);
+  }, [toast, refreshPlaylists]);
 
   const loadDir = useCallback(
     async (target: string) => {
@@ -227,8 +230,11 @@ export default function BaiduPanPanel() {
     try {
       const st = await api.baiduImport(dir);
       await loadRoots();
+      await refreshPlaylists();
+      // 导入即进播放列表：结果里带上列表名与新增条数，用户能在左侧直接找到
       toast(
-        `导入完成：扫描 ${st.scanned} 个音频，新增 ${st.imported}，跳过 ${st.skipped}`,
+        `已导入 ${st.imported} 首到播放列表「${st.playlist}」` +
+          (st.added < st.imported ? `（${st.imported - st.added} 首此前已在该列表）` : ""),
         "success",
       );
     } catch (e) {
@@ -242,6 +248,7 @@ export default function BaiduPanPanel() {
     try {
       const n = await api.baiduRemoveRoot(root);
       await loadRoots();
+      await refreshPlaylists();
       setOpenAlbum(null);
       toast(`已移除 ${n} 首`, "success");
     } catch (e) {

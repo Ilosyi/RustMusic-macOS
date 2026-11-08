@@ -38,7 +38,7 @@ export interface DropResult {
 
 export interface PlaylistEntryMeta {
   rowid: number;
-  kind: "local" | "netease" | "qq" | "kugou" | "bilibili" | "navidrome";
+  kind: "local" | "netease" | "qq" | "kugou" | "bilibili" | "navidrome" | "baidu";
   trackId: number | null;
   onlineId: string | null;
   title: string;
@@ -371,6 +371,20 @@ export interface BaiduImportStat {
   scanned: number;
   imported: number;
   skipped: number;
+  /** 导入后自动建/更新的播放列表名（= 导入文件夹名） */
+  playlist: string;
+  playlistId: number;
+  /** 本次新加入播放列表的曲目数（重复导入为 0） */
+  added: number;
+}
+
+/** 百度网盘曲目在队列里的元数据（播放列表/最近播放恢复用） */
+export interface BaiduQueueTrack {
+  fsId: string;
+  title: string;
+  artist: string;
+  album: string;
+  ext: string;
 }
 
 export type QueueItemKind =
@@ -387,7 +401,8 @@ export type QueueItem =
   | { kind: "track" | "netease" | "url"; id: number }
   | { kind: "qq" | "kugou"; id: string }
   | { kind: "bilibili"; id: string }
-  | { kind: "navidrome"; id: string };
+  | { kind: "navidrome"; id: string }
+  | { kind: "baidu"; id: string };
 
 export type ViewName =
   | "library"

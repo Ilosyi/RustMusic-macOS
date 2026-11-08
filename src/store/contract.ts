@@ -15,6 +15,7 @@ import type {
   QqSong,
   KgSong,
   Playlist,
+  BaiduQueueTrack,
   QueueItem,
   RepeatMode,
   ScanState,
@@ -104,6 +105,8 @@ export interface Store {
 
   /** B 站曲目元数据缓存（键 = rid "BVxxx-cid"，我喜欢/播放列表/队列条目用） */
   biliCache: Record<string, BiliTrack>;
+  /** 百度网盘元数据缓存（键 = fs_id，播放列表/最近播放恢复用） */
+  baiduCache: Record<string, BaiduQueueTrack>;
   /** Navidrome 元数据缓存（键 = 歌曲 id，最近播放/队列恢复用） */
   ndCache: Record<
     string,

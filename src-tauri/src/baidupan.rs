@@ -46,7 +46,8 @@ const C_STOKEN: &str = "baidu_stoken";
 const C_BDUSS: &str = "baidu_bduss";
 
 /// 与本地资料库同口径的可解码扩展名（symphonia 侧没有 ape/wma 解码器，导入也会播不了）
-const AUDIO_EXTS: [&str; 9] = ["mp3", "flac", "wav", "ogg", "oga", "m4a", "aac", "mp4", "m4b"];
+// 只收真正的音乐容器：mp4/m4b 是视频/有声书容器，网盘目录里常混着视频
+const AUDIO_EXTS: [&str; 7] = ["mp3", "flac", "wav", "ogg", "oga", "m4a", "aac"];
 
 /// 会话失效：内部信号，with_session 捕获后提示重新登录
 const SESSION_EXPIRED: &str = "__baidu_session_expired__";
@@ -372,6 +373,11 @@ pub struct ImportStat {
     pub scanned: u32,
     pub imported: u32,
     pub skipped: u32,
+    /// 导入后自动建/更新的播放列表名（= 导入文件夹名）
+    pub playlist: String,
+    pub playlist_id: i64,
+    /// 本次新加入播放列表的曲目数（重复导入为 0）
+    pub added: u32,
 }
 
 #[derive(Serialize)]
@@ -491,55 +497,106 @@ pub fn roots(conn: &Connection) -> Vec<RootInfo> {
 /// 导入（或刷新）一个网盘文件夹：递归扫描音频并按目录结构生成专辑
 pub fn import_root(state: &AppState, root: &str) -> Result<ImportStat, String> {
     let root = norm_dir(root);
-    let items = with_session(state, |s| list_all(s, &root))?;
+    let mut items = with_session(state, |s| list_all(s, &root))?;
+    // 播放列表按「专辑 → 路径」排好，多专辑文件夹导入后是一张有序的整单
+    items.sort_by(|a, b| {
+        let (aa, _, _) = meta_from(&root, a);
+        let (ba, _, _) = meta_from(&root, b);
+        aa.cmp(&ba).then_with(|| a.path.cmp(&b.path))
+    });
     let scanned = items.len() as u32;
     let mut conn = state.db.lock();
-    let tx = conn.transaction().map_err(|e| e.to_string())?;
     let ts = now_ms() as i64 / 1000;
     let mut imported = 0u32;
-    for it in &items {
-        let (album, artist, title) = meta_from(&root, it);
-        tx.execute(
-            "INSERT INTO baidu_tracks(fs_id, root, path, album, artist, title, ext, size, mtime, imported_at)
-             VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10)
-             ON CONFLICT(fs_id) DO UPDATE SET
-               root=excluded.root, path=excluded.path, album=excluded.album,
-               artist=excluded.artist, title=excluded.title, ext=excluded.ext,
-               size=excluded.size, mtime=excluded.mtime, imported_at=excluded.imported_at",
-            params![
-                it.fs_id,
-                root,
-                it.path,
-                album,
-                artist,
+    {
+        let tx = conn.transaction().map_err(|e| e.to_string())?;
+        for it in &items {
+            let (album, artist, title) = meta_from(&root, it);
+            tx.execute(
+                "INSERT INTO baidu_tracks(fs_id, root, path, album, artist, title, ext, size, mtime, imported_at)
+                 VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10)
+                 ON CONFLICT(fs_id) DO UPDATE SET
+                   root=excluded.root, path=excluded.path, album=excluded.album,
+                   artist=excluded.artist, title=excluded.title, ext=excluded.ext,
+                   size=excluded.size, mtime=excluded.mtime, imported_at=excluded.imported_at",
+                params![
+                    it.fs_id,
+                    root,
+                    it.path,
+                    album,
+                    artist,
+                    title,
+                    it.ext,
+                    it.size as i64,
+                    it.mtime,
+                    ts
+                ],
+            )
+            .map_err(|e| format!("写入导入记录失败：{e}"))?;
+            imported += 1;
+        }
+        let mut all = roots_list(&tx);
+        if !all.iter().any(|r| r == &root) {
+            all.push(root.clone());
+            set_roots(&tx, &all);
+        }
+        tx.commit().map_err(|e| e.to_string())?;
+    }
+
+    // 导入即加入播放列表（与网易云/QQ/酷狗歌单导入走同一套入库逻辑）：
+    // 列表名取导入文件夹名，remote_id = 网盘目录路径，重复导入合并去重
+    let name = root_name(&root);
+    let rows: Vec<crate::commands::playlists::OnlineTrackRow> = items
+        .iter()
+        .map(|it| {
+            let (album, artist, title) = meta_from(&root, it);
+            crate::commands::playlists::OnlineTrackRow {
+                rid: it.fs_id.clone(),
                 title,
-                it.ext,
-                it.size as i64,
-                it.mtime,
-                ts
-            ],
-        )
-        .map_err(|e| format!("写入导入记录失败：{e}"))?;
-        imported += 1;
-    }
-    let mut all = roots_list(&tx);
-    if !all.iter().any(|r| r == &root) {
-        all.push(root.clone());
-        set_roots(&tx, &all);
-    }
-    tx.commit().map_err(|e| e.to_string())?;
+                artist,
+                album,
+                cover: String::new(),
+                duration_ms: 0,
+                media_mid: it.ext.clone(),
+                vip: false,
+            }
+        })
+        .collect();
+    let (playlist_id, added) =
+        crate::commands::playlists::import_online_tracks(&conn, KIND, &root, &name, &rows)?;
+
     Ok(ImportStat {
         root,
         scanned,
         imported,
         skipped: scanned.saturating_sub(imported),
+        playlist: name,
+        playlist_id,
+        added: added as u32,
     })
+}
+
+/// 目录按 path 切出最后一段作为播放列表名
+fn root_name(root: &str) -> String {
+    root.trim_end_matches('/')
+        .rsplit('/')
+        .find(|s| !s.is_empty())
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| "百度网盘".to_string())
 }
 
 pub fn remove_root(state: &AppState, root: &str) -> Result<u32, String> {
     let root = norm_dir(root);
     let mut conn = state.db.lock();
     let tx = conn.transaction().map_err(|e| e.to_string())?;
+    if let Some(pid) = crate::db::find_playlist_by_remote(&tx, KIND, &root, "") {
+        crate::db::delete_playlist(&tx, pid);
+    }
+    let _ = tx.execute(
+        "DELETE FROM online_tracks WHERE kind = ?1
+           AND rid IN (SELECT fs_id FROM baidu_tracks WHERE root = ?2)",
+        params![KIND, root],
+    );
     let n = tx
         .execute("DELETE FROM baidu_tracks WHERE root = ?1", params![root])
         .map_err(|e| e.to_string())?;
@@ -548,6 +605,46 @@ pub fn remove_root(state: &AppState, root: &str) -> Result<u32, String> {
     set_roots(&tx, &all);
     tx.commit().map_err(|e| e.to_string())?;
     Ok(n as u32)
+}
+
+/// 把库里已导入的曲目按导入目录重建播放列表（幂等）。
+/// 0.7.2 之前的导入没有登记播放列表，升级后靠它一次性补齐；
+/// 之后每次导入也会走同一套 `import_online_tracks`。
+pub fn rebuild_playlists(conn: &Connection) -> Result<u32, String> {
+    let roots = roots_list(conn);
+    let mut n = 0u32;
+    for root in roots {
+        let mut stmt = conn
+            .prepare(
+                "SELECT fs_id, title, artist, album, ext FROM baidu_tracks
+                 WHERE root = ?1 ORDER BY album, path",
+            )
+            .map_err(|e| e.to_string())?;
+        let rows: Vec<crate::commands::playlists::OnlineTrackRow> = stmt
+            .query_map(params![root], |r| {
+                Ok(crate::commands::playlists::OnlineTrackRow {
+                    rid: r.get(0)?,
+                    title: r.get(1)?,
+                    artist: r.get(2)?,
+                    album: r.get(3)?,
+                    cover: String::new(),
+                    duration_ms: 0,
+                    media_mid: r.get::<_, String>(4)?,
+                    vip: false,
+                })
+            })
+            .map_err(|e| e.to_string())?
+            .filter_map(|x| x.ok())
+            .collect();
+        if rows.is_empty() {
+            continue;
+        }
+        let name = root_name(&root);
+        let (_pid, _added) =
+            crate::commands::playlists::import_online_tracks(conn, KIND, &root, &name, &rows)?;
+        n += 1;
+    }
+    Ok(n)
 }
 
 pub fn albums(conn: &Connection) -> Vec<BdAlbum> {
@@ -1012,4 +1109,62 @@ pub fn qr_poll(state: &AppState, sign: &str) -> Result<QrState, String> {
 /// 去掉 token 里可能带的 JSON 引号/转义
 fn token_value(raw: &str) -> String {
     raw.trim_matches('"').replace("\\/", "/")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn item(path: &str) -> BdItem {
+        BdItem {
+            fs_id: "1".into(),
+            name: path.rsplit('/').next().unwrap_or(path).to_string(),
+            path: path.to_string(),
+            is_dir: false,
+            size: 0,
+            mtime: 0,
+            ext: path.rsplit('.').next().unwrap_or("").to_lowercase(),
+        }
+    }
+
+    #[test]
+    fn 只认音频扩展名_视频容器不算() {
+        for ext in ["mp3", "FLAC", "wav", "ogg", "oga", "m4a", "aac"] {
+            assert!(is_audio(ext), "{ext} 应该算音频");
+        }
+        // mp4 / m4b 是视频、有声书容器，导入时要跳过
+        for ext in ["mp4", "m4b", "ape", "wma", "jpg", "txt", "zip", ""] {
+            assert!(!is_audio(ext), "{ext} 不该算音频");
+        }
+    }
+
+    #[test]
+    fn 播放列表名取最后一段路径() {
+        assert_eq!(root_name("/我的资源/音乐songs/V家专辑"), "V家专辑");
+        assert_eq!(root_name("/我的资源/音乐songs/V家专辑/"), "V家专辑");
+        assert_eq!(root_name("/"), "百度网盘");
+    }
+
+    #[test]
+    fn 专辑歌手从目录结构与文件名推导() {
+        let root = "/我的资源/音乐songs/V家专辑";
+        let (album, artist, title) =
+            meta_from(root, &item("/我的资源/音乐songs/V家专辑/【纯白2021】/01. 洛天依 - 千本樱.flac"));
+        assert_eq!(album, "【纯白2021】");
+        assert_eq!(artist, "洛天依");
+        assert_eq!(title, "千本樱");
+
+        // 没有「歌手 - 歌名」、也没有歌手层目录 → 歌手留空（界面显示「未知歌手」）
+        let (album, artist, title) =
+            meta_from(root, &item("/我的资源/音乐songs/V家专辑/某专辑/02. 曲目2.wav"));
+        assert_eq!(album, "某专辑");
+        assert_eq!(artist, "");
+        assert_eq!(title, "曲目2");
+
+        // 目录里有歌手层时用倒数第三段
+        let (album, artist, _title) =
+            meta_from(root, &item("/我的资源/音乐songs/V家专辑/洛天依/某专辑/03 曲目3.wav"));
+        assert_eq!(album, "某专辑");
+        assert_eq!(artist, "洛天依");
+    }
 }
