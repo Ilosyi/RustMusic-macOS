@@ -73,10 +73,10 @@ index a9845bc..0000000
 -        working-directory: src-tauri
 -        run: cargo test --bin rustmusic --locked
 diff --git a/README.md b/README.md
-index 9b58588..4279b69 100644
+index 9b58588..8ce4a1c 100644
 --- a/README.md
 +++ b/README.md
-@@ -2,12 +2,23 @@
+@@ -2,12 +2,25 @@
  
  一款用 **Rust + Tauri 2 + React** 打造的高性能、精美界面的桌面音乐播放器。
  
@@ -89,19 +89,21 @@ index 9b58588..4279b69 100644
  
 +> ### 🍎 macOS 版（Apple Silicon）
 +>
-+> 本仓库是 [LingyunStudio/RustMusic](https://github.com/LingyunStudio/RustMusic) **v0.7.1** 的 macOS 适配分支，已补丁并在 macOS 26 / Apple Silicon 上实测通过。
++> 本仓库是 [LingyunStudio/RustMusic](https://github.com/LingyunStudio/RustMusic) **v0.7.1** 的 macOS 适配分支，已补丁并在 macOS 26 / Apple Silicon 上实测通过；并额外加入了 **百度网盘音源（扫码登录）**。
 +>
-+> **[⬇️ 下载 RustMusic_0.7.1_aarch64.dmg](https://github.com/Ilosyi/RustMusic-macOS/releases/latest)**
++> **[⬇️ 下载最新 macOS dmg](https://github.com/Ilosyi/RustMusic-macOS/releases/latest)**
 +>
 +> 首次打开若提示「无法验证开发者」：右键点 App → 打开；或执行 `xattr -dr com.apple.quarantine /Applications/RustMusic.app`（ad-hoc 签名、未做苹果公证）。
 +>
 +> macOS 适配内容包括：系统原生 Overlay 标题栏（红绿灯）与三套界面体系自适应、中文化应用菜单栏（修复 ⌘C/⌘V/⌘Q 失效）、点 Dock 图标恢复隐藏窗口、菜单栏模板图标、透明桌面歌词浮窗、迷你小窗、系统媒体控制（控制中心 / 键盘媒体键），凭据改为本机文件存储（避免每次升级都弹钥匙串密码框），以及 OGG 解码补全。
++>
++> 另含原创功能：**百度网盘作为原生音源**——在「在线音源」里扫码登录，浏览网盘目录、整棵文件夹导入成专辑，边下边播（缓存可复用）。
 +> 详见 [macOS-适配说明.md](macOS-适配说明.md)。
 +
  ## ✨ 功能特性
  
  ### 播放引擎（纯 Rust）
-@@ -65,7 +76,6 @@
+@@ -65,7 +78,6 @@
  ```
  ├── index.html               # 主窗口入口
  ├── desktop-lyrics.html      # 桌面歌词窗口入口（Vite 多页构建）
@@ -109,7 +111,7 @@ index 9b58588..4279b69 100644
  ├── src/                     # React 前端
  │   ├── components/          # 播放栏、歌词页、队列、音频律动层（AudioFxLayer）、通用组件
  │   ├── views/               # 资料库 / 播放列表 / 设置等页面
-@@ -114,7 +124,7 @@
+@@ -114,7 +126,7 @@
          └── updater.rs       # GitHub Release 自动更新（下载 + SHA-256 校验 + 静默安装）
  ```
  
@@ -118,7 +120,7 @@ index 9b58588..4279b69 100644
  
  ### 💡 核心设计亮点：WebView2 TrySuspend 深度休眠与事件驱动后台切歌（Windows）
  
-@@ -162,7 +172,7 @@ sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev
+@@ -162,7 +174,7 @@ sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev
  
  （Rust 侧的其它 D-Bus 用途——MPRIS 媒体控制——走纯 Rust 的 zbus；音频输出经 cpal 走 ALSA/PipeWire，故需要 `libasound2-dev`。WebKitGTK 的 WebView 内媒体元素依赖 GStreamer 插件，建议一并安装：`sudo apt install gstreamer1.0-plugins-base gstreamer1.0-plugins-good`。）
  
@@ -127,7 +129,7 @@ index 9b58588..4279b69 100644
  
  ```bash
  npm run build                                          # 先构建前端（tauri 上下文引用 dist）
-@@ -196,7 +206,7 @@ cd src-tauri && cargo test --bin rustmusic --locked
+@@ -196,7 +208,7 @@ cd src-tauri && cargo test --bin rustmusic --locked
  - [ ] QQ / 酷狗 / Navidrome 歌词翻译（网易云已支持）
  - [ ] 音频转码 / 标签批量编辑
  - [x] Linux 构建
@@ -138,11 +140,11 @@ index 9b58588..4279b69 100644
  
 diff --git "a/macOS-\351\200\202\351\205\215\350\257\264\346\230\216.md" "b/macOS-\351\200\202\351\205\215\350\257\264\346\230\216.md"
 new file mode 100644
-index 0000000..694b178
+index 0000000..60b0293
 --- /dev/null
 +++ "b/macOS-\351\200\202\351\205\215\350\257\264\346\230\216.md"
-@@ -0,0 +1,127 @@
-+# RustMusic macOS 版（0.7.1，Apple Silicon）
+@@ -0,0 +1,152 @@
++# RustMusic macOS 版（0.7.2，Apple Silicon）
 +
 +上游项目：[LingyunStudio/RustMusic](https://github.com/LingyunStudio/RustMusic)（Tauri 2 + React + Rust，官方只发 Windows / Linux）。
 +本仓库是在上游 **v0.7.1**（`3a7a452`）之上打的 macOS 适配分支，已在本机（macOS 26 / Apple Silicon / arm64）实测通过。
@@ -151,19 +153,40 @@ index 0000000..694b178
 +
 +| 文件 | 说明 |
 +| --- | --- |
-+| `RustMusic_0.7.1_aarch64.dmg` | 安装镜像，双击后把 RustMusic 拖进 Applications（7.2 MB） |
++| `RustMusic_0.7.2_aarch64.dmg` | 安装镜像，双击后把 RustMusic 拖进 Applications（7.3 MB） |
 +| `RustMusic.app` | 已 ad-hoc 签名的应用本体，可直接拖进 /Applications |
 +| `rustmusic-macos-port.patch` | 相对上游 v0.7.1 的全部改动（`git diff`，含新增文件） |
 +
-+SHA-256（dmg）：`09f4a35256b20400aadacb13b7857bb060929adb2efe3ad1ac8e6f2e24f0e381`
++SHA-256（dmg）：`4f9695afb99c112b75e797ee6da77f83cedfb82f8c6bc35b253494cd49a7910a`
 +
 +## 安装 / 首次运行
 +
-+1. 打开 `RustMusic_0.7.1_aarch64.dmg`，把 RustMusic 拖到 Applications。
++1. 打开 `RustMusic_0.7.2_aarch64.dmg`，把 RustMusic 拖到 Applications。
 +2. 首次启动若提示「无法打开，因为无法验证开发者」：右键点图标 → 打开 → 再点「打开」；或执行
 +   `xattr -dr com.apple.quarantine /Applications/RustMusic.app`。
 +   （构建是 ad-hoc 签名、未走苹果公证，这是分发方式决定的，不是包坏了。）
 +3. 首次使用会正常启动，**不会**弹钥匙串密码框（见下方「凭据存储」）。
++
++## 0.7.2 新增：百度网盘作为原生音源
++
++「在线音源」里多了一个 **百度网盘** 标签页，与 Bilibili / Navidrome 并列：
++
++1. **扫码登录**（不用 AppKey）：面板里直接显示百度登录二维码，手机百度 App 扫码确认即可。
++2. **目录浏览**：面包屑进目录，文件夹可逐层进入，音频文件可直接试听。
++3. **整棵文件夹导入**：在专辑目录点「导入该文件夹」，递归扫描其中的音频（mp3 / flac / wav / ogg / m4a …），
++   按「上一级目录 = 专辑、文件夹名/`歌手 - 歌名` 文件名 = 歌手与曲名」写进本地库，之后按专辑播放、进队列、看歌词，和本地音乐一致。
++4. **边下边播**：播放时按 `bd-<fs_id>-<音质>` 缓存到应用数据目录，下载进度够起播就开始播，二次播放直接命中缓存。
++
++实现要点（换实现时别踩的坑）：
++
++- 登录态走 cookie 会话：`passport.baidu.com/v2/api/getqrcode` 取二维码 → `channel/unicast` 长轮询（`channel_v` 的 `status`/`v`）
++  → **`/v3/login/main/qrbdusslogin?v=<ms>&bduss=<channel_v.v>&loginVersion=v4&qrcode=1&tpl=netdisk`** 才是登录页真正用的换取接口
++  （老的 `/v2/api/bdussign` 现在会 302 到 error.html）。BDUSS/STOKEN 落到本机凭据文件，bdstoken 存 settings。
++- 目录列表用网页接口 `pan.baidu.com/api/list?...&dir=…&bdstoken=…`（没有 recursion，逐层 BFS）。
++- 直链用 `pan.baidu.com/api/filemetas?target=["<路径>"]&dlink=1&web=5&app_id=250528`；
++  下载 dlink **必须**带 `User-Agent: pan.baidu.com` 且带 `Cookie: BDUSS=…; STOKEN=…`，否则 403。
++- 昵称用 `rest/2.0/xpan/nas?method=uinfo`（网页的 `gettemplatevariable` 在 cookie 会话下返回 errno -6）。
++- 应用启动时会清理 downloads 目录里的旧缓存，白名单必须包含 `bd-` 前缀，否则网盘缓存活不过一次重启。
 +
 +## 0.7.1 相比 0.6.0 的上游变化（本版已一并适配）
 +
@@ -235,7 +258,7 @@ index 0000000..694b178
 +
 +## 本机验证结果（macOS 26 / Apple Silicon）
 +
-+- 构建：`npm run tauri build` → `RustMusic.app` + `RustMusic_0.7.1_aarch64.dmg`（7.2 MB）✅
++- 构建：`npm run tauri build` → `RustMusic.app` + `RustMusic_0.7.2_aarch64.dmg`（7.3 MB）✅
 +- 启动：/Applications 中启动正常，无钥匙串弹窗，资料库空态干净 ✅
 +- 外壳：原生红绿灯 + 中文菜单栏「RustMusic 文件 编辑 显示 窗口」，三套主题（标准 / 拟物 / 液态玻璃）下
 +  侧栏品牌区都不压红绿灯 ✅
@@ -246,6 +269,8 @@ index 0000000..694b178
 +- 系统媒体控制：控制中心「正在播放」显示曲目 / 应用图标，可播放暂停 ✅
 +- 关闭窗口 → 隐藏（进程存活）；点 Dock 图标 / `open -a` → `RunEvent::Reopen` 恢复窗口 ✅
 +- 设置页：最小化到菜单栏、macOS 更新说明、在访达中显示、输出设备「跟随系统默认（MacBook Air 扬声器）」✅
++- 百度网盘：扫码登录成功（昵称自动显示）→ 浏览 `/我的资源/音乐songs/V家专辑` → 进入专辑 → 「导入该文件夹」
++  导入 8 首 wav → 播放正常（边下边播，位置 0:09 / 4:36，缓存 `bd-<fs_id>-wav` 落盘）✅
 +
 +## 已知限制
 +
@@ -256,6 +281,8 @@ index 0000000..694b178
 +- **自动更新需手动安装**：点「立即更新」只跳 GitHub 发布页，需自己下 dmg 覆盖（与 Linux 版一致）。
 +- **WASAPI 独占 / 任务栏歌词**：Windows 专属，macOS 上相关设置项不显示。
 +- 仅提供 **arm64（Apple Silicon）** 构建，未提供 Intel / Universal 包。
++- **百度网盘音源的限制**：登录态失效后需重新扫码（目前只提示失效，不会自动续期）；网盘接口是百度网页版在用的私有接口，
++  百度改动后可能失效；会员专属 / 无权限的文件取不到直链会给出提示；导入是按目录元数据写库，不预先下载音频。
 +
 +## 重新构建
 +
@@ -269,13 +296,35 @@ index 0000000..694b178
 +
 +本地开发：`npm run tauri dev`。若要对外分发并消除 Gatekeeper 提示，需要 Apple Developer 证书做正式签名 + 公证
 +（`APPLE_ID` / `APPLE_PASSWORD` / `APPLE_TEAM_ID` 或 `APPLE_API_*`），此时可去掉 `signingIdentity: "-"`。
+diff --git a/package.json b/package.json
+index 738c3e4..8c0f4d4 100644
+--- a/package.json
++++ b/package.json
+@@ -1,7 +1,7 @@
+ {
+   "name": "rustmusic",
+   "private": true,
+-  "version": "0.7.1",
++  "version": "0.7.2",
+   "type": "module",
+   "scripts": {
+     "dev": "vite",
 diff --git a/rustmusic-macos-port.patch b/rustmusic-macos-port.patch
 new file mode 100644
-index 0000000..3dd06c8
+index 0000000..0a5766c
 diff --git a/src-tauri/Cargo.lock b/src-tauri/Cargo.lock
-index 6dd3732..b3c1fcc 100644
+index 6dd3732..fd53f2c 100644
 --- a/src-tauri/Cargo.lock
 +++ b/src-tauri/Cargo.lock
+@@ -3988,7 +3988,7 @@ dependencies = [
+ 
+ [[package]]
+ name = "rustmusic"
+-version = "0.7.1"
++version = "0.7.2"
+ dependencies = [
+  "aes",
+  "base64 0.22.1",
 @@ -4549,6 +4549,7 @@ dependencies = [
   "symphonia-codec-vorbis",
   "symphonia-core",
@@ -312,9 +361,17 @@ index 6dd3732..b3c1fcc 100644
   "libc",
   "log",
 diff --git a/src-tauri/Cargo.toml b/src-tauri/Cargo.toml
-index ad02359..03a0997 100644
+index ad02359..b39521c 100644
 --- a/src-tauri/Cargo.toml
 +++ b/src-tauri/Cargo.toml
+@@ -1,6 +1,6 @@
+ [package]
+ name = "rustmusic"
+-version = "0.7.1"
++version = "0.7.2"
+ description = "RustMusic - 精美的高性能音乐播放器"
+ authors = ["RustMusic"]
+ license = "Apache-2.0"
 @@ -18,13 +18,16 @@ custom-protocol = ["tauri/custom-protocol"]
  tauri-build = { version = "~2.6", features = [] }
  
@@ -350,6 +407,1027 @@ diff --git a/src-tauri/icons/tray-template.png b/src-tauri/icons/tray-template.p
 new file mode 100644
 index 0000000..a6d33fe
 Binary files /dev/null and b/src-tauri/icons/tray-template.png differ
+diff --git a/src-tauri/src/baidupan.rs b/src-tauri/src/baidupan.rs
+new file mode 100644
+index 0000000..1f55ccf
+--- /dev/null
++++ b/src-tauri/src/baidupan.rs
+@@ -0,0 +1,1015 @@
++//! 百度网盘音源：网页扫码登录（BDUSS 会话）+ 目录浏览 + 递归导入 + 直链播放。
++//!
++//! 与网易云 / QQ / 酷狗这类"曲库"音源不同，网盘没有全网检索接口，只能读取用户
++//! 自己网盘里的文件，因此模型是：
++//! 「选择网盘里的一个文件夹 → 递归扫出音频文件 → 按目录结构生成专辑 → 按专辑播放」。
++//!
++//! ## 为什么是扫码登录而不是开放平台 OAuth
++//! 开放平台 OAuth 要求用户先在开发者控制台创建应用、拿 AppKey/AppSecret，再把授权码
++//! 从浏览器复制回来，门槛高。这里改成：在应用内打开百度登录页（登录页默认就是扫码），
++//! 用户用手机百度 App 扫码后，我们从 WebView 的 cookie 仓库里取 `BDUSS`，随后所有
++//! 网盘请求都带这个会话 cookie——与网页版 / 各类网盘客户端同一套鉴权，无需注册应用。
++//!
++//! ## 播放
++//! 网盘文件不能直接当 URL 播（直链是限时签名地址，且必须带 `User-Agent: pan.baidu.com`），
++//! 每次播放现取直链，下载/缓存链路复用 `engine::cache`（kind == "baidu" 时补该 UA）。
++
++use crate::credentials;
++use crate::db;
++use crate::AppState;
++use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
++use rusqlite::{params, Connection};
++use serde::Serialize;
++use std::io::Read;
++use std::time::{Duration, SystemTime, UNIX_EPOCH};
++
++/// DB / 前端统一的音源标识
++pub const KIND: &str = "baidu";
++
++const WEB_BASE: &str = "https://pan.baidu.com";
++const WEB_LIST: &str = "https://pan.baidu.com/api/list";
++const WEB_TEMPLATE_VARS: &str = "https://pan.baidu.com/api/gettemplatevariable";
++const WEB_FILEMETAS: &str = "https://pan.baidu.com/api/filemetas";
++const XPAN_MULTIMEDIA: &str = "https://pan.baidu.com/rest/2.0/xpan/multimedia";
++
++/// 下载接口要求：请求头 UA 必须是 pan.baidu.com，否则 403
++pub const DOWNLOAD_UA: &str = "pan.baidu.com";
++/// 网页接口要浏览器 UA，否则可能被风控
++const WEB_UA: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
++
++const K_ROOT: &str = "baidu_roots";
++const K_USER: &str = "baidu_user";
++const K_STOKEN: &str = "baidu_stoken";
++/// bdstoken 在凭据文件里再存一份：下载线程拿不到 DB 连接，但 dlink 下载要带它
++const C_STOKEN: &str = "baidu_stoken";
++/// 会话 cookie 走凭据存储（macOS = 本机 0600 文件，Windows/Linux = 系统凭据管理器）
++const C_BDUSS: &str = "baidu_bduss";
++
++/// 与本地资料库同口径的可解码扩展名（symphonia 侧没有 ape/wma 解码器，导入也会播不了）
++const AUDIO_EXTS: [&str; 9] = ["mp3", "flac", "wav", "ogg", "oga", "m4a", "aac", "mp4", "m4b"];
++
++/// 会话失效：内部信号，with_session 捕获后提示重新登录
++const SESSION_EXPIRED: &str = "__baidu_session_expired__";
++
++fn now_ms() -> u64 {
++    SystemTime::now()
++        .duration_since(UNIX_EPOCH)
++        .map(|d| d.as_millis() as u64)
++        .unwrap_or(0)
++}
++
++fn q(v: &str) -> String {
++    utf8_percent_encode(v, NON_ALPHANUMERIC).to_string()
++}
++
++fn agent() -> ureq::Agent {
++    ureq::AgentBuilder::new()
++        .timeout_connect(Duration::from_secs(10))
++        .timeout_read(Duration::from_secs(30))
++        .user_agent(WEB_UA)
++        .build()
++}
++
++// ---------- 会话（BDUSS + bdstoken） ----------
++
++#[derive(Clone)]
++pub struct Session {
++    pub bduss: String,
++    pub stoken: String,
++}
++
++fn cookie_header(s: &Session) -> String {
++    if s.stoken.is_empty() {
++        format!("BDUSS={}", s.bduss)
++    } else {
++        format!("BDUSS={}; STOKEN={}", s.bduss, s.stoken)
++    }
++}
++
++pub fn session() -> Option<Session> {
++    let bduss = credentials::get(C_BDUSS).unwrap_or_default();
++    if bduss.trim().is_empty() {
++        return None;
++    }
++    Some(Session {
++        bduss: bduss.trim().to_string(),
++        stoken: String::new(),
++    })
++}
++
++pub fn authorized() -> bool {
++    session().is_some()
++}
++
++pub fn user_name(conn: &Connection) -> String {
++    db::get_setting(conn, K_USER).unwrap_or_default()
++}
++
++pub fn logout(conn: &Connection) {
++    credentials::clear(C_BDUSS);
++    db::set_setting(conn, K_STOKEN, "");
++    db::set_setting(conn, K_USER, "");
++}
++
++/// 登录成功后落盘：BDUSS 进凭据存储，bdstoken / 昵称进 settings
++pub fn save_login(conn: &Connection, bduss: &str, stoken: &str, user: &str) -> Result<(), String> {
++    let bduss = bduss.trim();
++    if bduss.is_empty() {
++        return Err("没有拿到百度登录态（BDUSS），请重试".into());
++    }
++    credentials::set(C_BDUSS, bduss)?;
++    let _ = credentials::set(C_STOKEN, stoken);
++    db::set_setting(conn, K_STOKEN, stoken);
++    db::set_setting(conn, K_USER, user);
++    Ok(())
++}
++
++/// 用现有 BDUSS 换 bdstoken / 昵称（网页接口的多数请求都要 bdstoken）
++pub fn sync_profile(conn: &Connection) -> Result<String, String> {
++    let mut s = session().ok_or("尚未登录百度网盘")?;
++    s.stoken = db::get_setting(conn, K_STOKEN).unwrap_or_default();
++    // xpan 的 uinfo 认 cookie 会话（网页的 gettemplatevariable 会返回 -6）
++    let url = format!(
++        "{WEB_BASE}/rest/2.0/xpan/nas?method=uinfo&clienttype=0&app_id=250528&web=1&bdstoken={}&t={}",
++        q(&s.stoken),
++        now_ms()
++    );
++    let v = web_get(&s, &url)?;
++    if let Some(e) = api_error(&v) {
++        return Err(e);
++    }
++    let user = v
++        .get("netdisk_name")
++        .and_then(|x| x.as_str())
++        .filter(|x| !x.is_empty())
++        .or_else(|| v.get("baidu_name").and_then(|x| x.as_str()))
++        .unwrap_or("")
++        .to_string();
++    if !user.is_empty() {
++        db::set_setting(conn, K_USER, &user);
++    }
++    let _ = credentials::set(C_STOKEN, &s.stoken);
++    Ok(user)
++}
++
++/// 登录窗口用：直接拿 webview 里的 cookie 完成落盘
++pub fn login_from_cookies(conn: &Connection, bduss: &str) -> Result<String, String> {
++    save_login(conn, bduss, "", "")?;
++    match sync_profile(conn) {
++        // 换不到 bdstoken 不算致命：列表接口多数情况仍可用，播放再兜底
++        Ok(user) => Ok(user),
++        Err(_) => Ok(String::new()),
++    }
++}
++
++// ---------- HTTP ----------
++
++fn web_get(s: &Session, url: &str) -> Result<serde_json::Value, String> {
++    let a = agent();
++    let cookie = cookie_header(s);
++    let resp = crate::net::with_retry(|| {
++        a.get(url)
++            .set("Cookie", &cookie)
++            .set("Referer", &format!("{WEB_BASE}/disk/main"))
++            .set("Accept", "application/json, text/plain, */*")
++            .call()
++    })?;
++    resp.into_json::<serde_json::Value>()
++        .map_err(|e| format!("百度网盘返回内容无法解析：{e}"))
++}
++
++/// 网页接口错误形状：`{"errno":-9,"request_id":...}`；-6 / -9 / 2 表示会话失效
++fn api_error(v: &serde_json::Value) -> Option<String> {
++    let errno = v.get("errno").and_then(|x| x.as_i64()).unwrap_or(0);
++    if errno == 0 {
++        return None;
++    }
++    if errno == -6 || errno == -9 || errno == 2 {
++        return Some(SESSION_EXPIRED.to_string());
++    }
++    let msg = v
++        .get("error_msg")
++        .or_else(|| v.get("show_msg"))
++        .or_else(|| v.get("request_id"))
++        .and_then(|x| x.as_str())
++        .unwrap_or("");
++    Some(format!("百度网盘接口错误（errno {errno}）{msg}"))
++}
++
++/// 带会话调用；会话失效统一换成可读提示
++pub fn with_session<T>(
++    state: &AppState,
++    f: impl Fn(&Session) -> Result<T, String>,
++) -> Result<T, String> {
++    let s = {
++        let conn = state.db.lock();
++        let mut s = session().ok_or("请先扫码登录百度网盘")?;
++        s.stoken = db::get_setting(&conn, K_STOKEN).unwrap_or_default();
++        s
++    };
++    match f(&s) {
++        Err(e) if e == SESSION_EXPIRED => Err("百度网盘登录已失效，请重新扫码登录".into()),
++        r => r,
++    }
++}
++
++// ---------- 目录浏览 ----------
++
++#[derive(Serialize, Clone)]
++#[serde(rename_all = "camelCase")]
++pub struct BdItem {
++    pub fs_id: String,
++    pub name: String,
++    pub path: String,
++    pub is_dir: bool,
++    pub size: u64,
++    pub mtime: i64,
++    pub ext: String,
++}
++
++fn item_from(v: &serde_json::Value) -> Option<BdItem> {
++    let isdir = v.get("isdir").and_then(|x| x.as_i64()).unwrap_or(0) == 1;
++    let path = v
++        .get("path")
++        .and_then(|x| x.as_str())
++        .unwrap_or("")
++        .to_string();
++    let name = v
++        .get("server_filename")
++        .and_then(|x| x.as_str())
++        .map(|s| s.to_string())
++        .unwrap_or_else(|| path.rsplit('/').next().unwrap_or("").to_string());
++    let ext = if isdir {
++        String::new()
++    } else {
++        name.rsplit_once('.')
++            .map(|(_, e)| e.to_ascii_lowercase())
++            .unwrap_or_default()
++    };
++    let fs_id = v
++        .get("fs_id")
++        .and_then(|x| x.as_i64())
++        .map(|n| n.to_string())
++        .or_else(|| v.get("fs_id").and_then(|x| x.as_str()).map(|s| s.to_string()))?;
++    Some(BdItem {
++        fs_id,
++        name,
++        path,
++        is_dir: isdir,
++        size: v.get("size").and_then(|x| x.as_u64()).unwrap_or(0),
++        mtime: v.get("server_mtime").and_then(|x| x.as_i64()).unwrap_or(0),
++        ext,
++    })
++}
++
++fn norm_dir(dir: &str) -> String {
++    let d = dir.trim();
++    if d.is_empty() || d == "/" {
++        return "/".to_string();
++    }
++    format!("/{}", d.trim_matches('/'))
++}
++
++/// 网页版列目录（分页 1000 一页）
++fn list_page(s: &Session, dir: &str, page: u64) -> Result<Vec<BdItem>, String> {
++    let url = format!(
++        "{WEB_LIST}?order=name&desc=0&showempty=0&web=1&page={page}&num=1000&dir={}&t={}&channel=chunlei&app_id=250528&bdstoken={}&clienttype=0&logid={}",
++        q(&norm_dir(dir)),
++        now_ms(),
++        q(&s.stoken),
++        now_ms()
++    );
++    let v = web_get(s, &url)?;
++    if let Some(e) = api_error(&v) {
++        return Err(e);
++    }
++    Ok(v
++        .get("list")
++        .and_then(|x| x.as_array())
++        .map(|arr| arr.iter().filter_map(item_from).collect())
++        .unwrap_or_default())
++}
++
++fn list_all_pages(s: &Session, dir: &str) -> Result<Vec<BdItem>, String> {
++    let mut out = Vec::new();
++    let mut page = 1u64;
++    loop {
++        let batch = list_page(s, dir, page)?;
++        let n = batch.len();
++        out.extend(batch);
++        if n < 1000 || page >= 100 {
++            break;
++        }
++        page += 1;
++    }
++    Ok(out)
++}
++
++/// 列一层目录（文件夹 + 可播放音频）
++pub fn list_dir(s: &Session, dir: &str) -> Result<Vec<BdItem>, String> {
++    let mut items = list_all_pages(s, dir)?;
++    items.retain(|i| i.is_dir || is_audio(&i.ext));
++    items.sort_by(|a, b| b.is_dir.cmp(&a.is_dir).then(a.name.cmp(&b.name)));
++    Ok(items)
++}
++
++/// 递归列出 root 下所有音频（网页接口没有 recursion 参数，逐层广度遍历）
++pub fn list_all(s: &Session, root: &str) -> Result<Vec<BdItem>, String> {
++    let mut out = Vec::new();
++    let mut queue: Vec<String> = vec![norm_dir(root)];
++    let mut visited = 0usize;
++    while let Some(dir) = queue.pop() {
++        let batch = list_all_pages(s, &dir)?;
++        visited += 1;
++        for it in batch {
++            if it.is_dir {
++                // 防御：异常深/异常宽的目录树不要无限展开
++                if visited < 4000 {
++                    queue.push(it.path.clone());
++                }
++            } else if is_audio(&it.ext) {
++                out.push(it);
++            }
++        }
++        if visited > 4000 {
++            break;
++        }
++    }
++    Ok(out)
++}
++
++fn is_audio(ext: &str) -> bool {
++    AUDIO_EXTS.iter().any(|e| e.eq_ignore_ascii_case(ext))
++}
++
++// ---------- 导入与专辑索引 ----------
++
++#[derive(Serialize, Clone)]
++#[serde(rename_all = "camelCase")]
++pub struct BdTrack {
++    pub fs_id: String,
++    pub title: String,
++    pub artist: String,
++    pub album: String,
++    pub ext: String,
++    pub size: u64,
++    pub path: String,
++}
++
++#[derive(Serialize)]
++#[serde(rename_all = "camelCase")]
++pub struct BdAlbum {
++    pub album: String,
++    pub artist: String,
++    pub count: u32,
++    pub size: u64,
++}
++
++#[derive(Serialize)]
++#[serde(rename_all = "camelCase")]
++pub struct ImportStat {
++    pub root: String,
++    pub scanned: u32,
++    pub imported: u32,
++    pub skipped: u32,
++}
++
++#[derive(Serialize)]
++#[serde(rename_all = "camelCase")]
++pub struct RootInfo {
++    pub root: String,
++    pub count: u32,
++    pub size: u64,
++}
++
++/// 去掉文件名前缀的曲号："01. "、"03 - "、"12、"（纯年份 "1979" 不会被吃掉）
++fn strip_track_no(stem: &str) -> String {
++    let s = stem.trim();
++    let digits: String = s.chars().take_while(|c| c.is_ascii_digit()).collect();
++    if digits.is_empty() || digits.len() > 2 {
++        return s.to_string();
++    }
++    let rest = &s[digits.len()..];
++    let rest = rest.trim_start();
++    if let Some(r) = rest
++        .strip_prefix('.')
++        .or_else(|| rest.strip_prefix('、'))
++        .or_else(|| rest.strip_prefix(')'))
++    {
++        return r.trim_start().to_string();
++    }
++    if let Some(r) = rest.strip_prefix('-') {
++        let r = r.trim_start();
++        if !r.is_empty() {
++            return r.to_string();
++        }
++    }
++    s.to_string()
++}
++
++/// 从「根目录 + 相对路径」推导专辑 / 歌手 / 歌名：
++/// `/V家专辑/专辑名/01. 歌手 - 歌名.flac` → artist=V家专辑(可被文件名覆盖), album=专辑名
++fn meta_from(root: &str, item: &BdItem) -> (String, String, String) {
++    let rel = item
++        .path
++        .strip_prefix(&norm_dir(root))
++        .unwrap_or(&item.path)
++        .trim_start_matches('/');
++    let segs: Vec<&str> = rel.split('/').filter(|s| !s.is_empty()).collect();
++    let album = if segs.len() >= 2 {
++        segs[segs.len() - 2].to_string()
++    } else {
++        norm_dir(root)
++            .rsplit('/')
++            .find(|s| !s.is_empty())
++            .unwrap_or("网盘音乐")
++            .to_string()
++    };
++    let dir_artist = if segs.len() >= 3 {
++        segs[segs.len() - 3].to_string()
++    } else {
++        String::new()
++    };
++    let stem = item
++        .name
++        .rsplit_once('.')
++        .map(|(a, _)| a)
++        .unwrap_or(&item.name)
++        .to_string();
++    let cleaned = strip_track_no(&stem);
++    let (mut artist, mut title) = (dir_artist, cleaned.clone());
++    for sep in [" - ", " – ", "—"] {
++        if let Some((a, t)) = cleaned.split_once(sep) {
++            let (a, t) = (a.trim(), t.trim());
++            if !a.is_empty() && !t.is_empty() {
++                artist = a.to_string();
++                title = t.to_string();
++            }
++            break;
++        }
++    }
++    if title.is_empty() {
++        title = stem;
++    }
++    (album, artist, title)
++}
++
++fn roots_list(conn: &Connection) -> Vec<String> {
++    db::get_setting(conn, K_ROOT)
++        .and_then(|s| serde_json::from_str::<Vec<String>>(&s).ok())
++        .unwrap_or_default()
++}
++
++fn set_roots(conn: &Connection, roots: &[String]) {
++    db::set_setting(
++        conn,
++        K_ROOT,
++        &serde_json::to_string(roots).unwrap_or_else(|_| "[]".into()),
++    );
++}
++
++pub fn roots(conn: &Connection) -> Vec<RootInfo> {
++    roots_list(conn)
++        .into_iter()
++        .map(|root| {
++            let (count, size) = conn
++                .query_row(
++                    "SELECT COUNT(*), COALESCE(SUM(size),0) FROM baidu_tracks WHERE root = ?1",
++                    params![root],
++                    |r| Ok((r.get::<_, i64>(0)?, r.get::<_, i64>(1)?)),
++                )
++                .unwrap_or((0, 0));
++            RootInfo {
++                root,
++                count: count as u32,
++                size: size.max(0) as u64,
++            }
++        })
++        .collect()
++}
++
++/// 导入（或刷新）一个网盘文件夹：递归扫描音频并按目录结构生成专辑
++pub fn import_root(state: &AppState, root: &str) -> Result<ImportStat, String> {
++    let root = norm_dir(root);
++    let items = with_session(state, |s| list_all(s, &root))?;
++    let scanned = items.len() as u32;
++    let mut conn = state.db.lock();
++    let tx = conn.transaction().map_err(|e| e.to_string())?;
++    let ts = now_ms() as i64 / 1000;
++    let mut imported = 0u32;
++    for it in &items {
++        let (album, artist, title) = meta_from(&root, it);
++        tx.execute(
++            "INSERT INTO baidu_tracks(fs_id, root, path, album, artist, title, ext, size, mtime, imported_at)
++             VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10)
++             ON CONFLICT(fs_id) DO UPDATE SET
++               root=excluded.root, path=excluded.path, album=excluded.album,
++               artist=excluded.artist, title=excluded.title, ext=excluded.ext,
++               size=excluded.size, mtime=excluded.mtime, imported_at=excluded.imported_at",
++            params![
++                it.fs_id,
++                root,
++                it.path,
++                album,
++                artist,
++                title,
++                it.ext,
++                it.size as i64,
++                it.mtime,
++                ts
++            ],
++        )
++        .map_err(|e| format!("写入导入记录失败：{e}"))?;
++        imported += 1;
++    }
++    let mut all = roots_list(&tx);
++    if !all.iter().any(|r| r == &root) {
++        all.push(root.clone());
++        set_roots(&tx, &all);
++    }
++    tx.commit().map_err(|e| e.to_string())?;
++    Ok(ImportStat {
++        root,
++        scanned,
++        imported,
++        skipped: scanned.saturating_sub(imported),
++    })
++}
++
++pub fn remove_root(state: &AppState, root: &str) -> Result<u32, String> {
++    let root = norm_dir(root);
++    let mut conn = state.db.lock();
++    let tx = conn.transaction().map_err(|e| e.to_string())?;
++    let n = tx
++        .execute("DELETE FROM baidu_tracks WHERE root = ?1", params![root])
++        .map_err(|e| e.to_string())?;
++    let mut all = roots_list(&tx);
++    all.retain(|r| r != &root);
++    set_roots(&tx, &all);
++    tx.commit().map_err(|e| e.to_string())?;
++    Ok(n as u32)
++}
++
++pub fn albums(conn: &Connection) -> Vec<BdAlbum> {
++    let mut stmt = match conn.prepare(
++        "SELECT album, MIN(artist), COUNT(*), COALESCE(SUM(size),0)
++         FROM baidu_tracks GROUP BY album ORDER BY MIN(artist), album",
++    ) {
++        Ok(s) => s,
++        Err(_) => return Vec::new(),
++    };
++    let rows = stmt.query_map([], |r| {
++        Ok(BdAlbum {
++            album: r.get::<_, String>(0)?,
++            artist: r.get::<_, String>(1).unwrap_or_default(),
++            count: r.get::<_, i64>(2).unwrap_or(0) as u32,
++            size: r.get::<_, i64>(3).unwrap_or(0).max(0) as u64,
++        })
++    });
++    match rows {
++        Ok(it) => it.flatten().collect(),
++        Err(_) => Vec::new(),
++    }
++}
++
++fn track_rows(conn: &Connection, sql: &str, p: &[&str]) -> Vec<BdTrack> {
++    let mut stmt = match conn.prepare(sql) {
++        Ok(s) => s,
++        Err(_) => return Vec::new(),
++    };
++    let rows = stmt.query_map(rusqlite::params_from_iter(p.iter().copied()), |r| {
++        Ok(BdTrack {
++            fs_id: r.get::<_, String>(0)?,
++            title: r.get::<_, String>(1)?,
++            artist: r.get::<_, String>(2)?,
++            album: r.get::<_, String>(3)?,
++            ext: r.get::<_, String>(4)?,
++            size: r.get::<_, i64>(5).unwrap_or(0).max(0) as u64,
++            path: r.get::<_, String>(6)?,
++        })
++    });
++    match rows {
++        Ok(it) => it.flatten().collect(),
++        Err(_) => Vec::new(),
++    }
++}
++
++pub fn album_tracks(conn: &Connection, album: &str) -> Vec<BdTrack> {
++    track_rows(
++        conn,
++        "SELECT fs_id, title, artist, album, ext, size, path FROM baidu_tracks
++         WHERE album = ?1 ORDER BY title",
++        &[album],
++    )
++}
++
++pub fn all_tracks(conn: &Connection) -> Vec<BdTrack> {
++    track_rows(
++        conn,
++        "SELECT fs_id, title, artist, album, ext, size, path FROM baidu_tracks
++         ORDER BY album, title",
++        &[],
++    )
++}
++
++// ---------- 播放 ----------
++
++/// 取直链：dlink 是限时签名地址（数小时有效），每次播放现取。
++/// 依次尝试：xpan multimedia（fs_id）→ 网页 filemetas（path）。
++/// 下载 dlink 时要带的 Cookie（BDUSS + STOKEN），否则百度 403
++pub fn download_cookie() -> Option<String> {
++    let bduss = credentials::get(C_BDUSS).unwrap_or_default();
++    if bduss.trim().is_empty() {
++        return None;
++    }
++    let stoken = credentials::get(C_STOKEN).unwrap_or_default();
++    Some(format!("BDUSS={}; STOKEN={}", bduss.trim(), stoken))
++}
++
++pub fn dlink(s: &Session, fs_id: &str, path: &str) -> Result<String, String> {
++    // 1) 网页 filemetas：按路径取（认 cookie，实测可用）
++    if !path.is_empty() {
++        let url = format!(
++            "{WEB_FILEMETAS}?target={}&dlink=1&web=5&app_id=250528&bdstoken={}&channel=chunlei&clienttype=0&t={}",
++            q(&format!("[\"{}\"]", path.replace('"', "\\\""))),
++            q(&s.stoken),
++            now_ms()
++        );
++        match web_get(s, &url) {
++            Ok(v) => {
++                if std::env::var_os("RM_BAIDU_DEBUG").is_some() {
++                    eprintln!(
++                        "[baidu] web filemetas = {}",
++                        v.to_string().chars().take(200).collect::<String>()
++                    );
++                }
++                if let Some(e) = api_error(&v) {
++                    return Err(e);
++                }
++                if let Some(d) = first_dlink(&v) {
++                    return Ok(d);
++                }
++            }
++            Err(e) => {
++                if std::env::var_os("RM_BAIDU_DEBUG").is_some() {
++                    eprintln!("[baidu] web filemetas err = {e}");
++                }
++            }
++        }
++    }
++    // 2) xpan multimedia（需要开放平台授权，普通 cookie 会话一般返回 9019）
++    if !fs_id.is_empty() {
++        let url = format!(
++            "{XPAN_MULTIMEDIA}?method=filemetas&fsids=[{}]&dlink=1&thumb=0&extra=0&bdstoken={}&app_id=250528&web=1&clienttype=0&channel=chunlei&t={}",
++            q(fs_id),
++            q(&s.stoken),
++            now_ms()
++        );
++        match web_get(s, &url) {
++            Ok(v) => {
++                if std::env::var_os("RM_BAIDU_DEBUG").is_some() {
++                    eprintln!(
++                        "[baidu] xpan filemetas = {}",
++                        v.to_string().chars().take(200).collect::<String>()
++                    );
++                }
++                if let Some(d) = first_dlink(&v) {
++                    return Ok(d);
++                }
++            }
++            Err(e) => {
++                if std::env::var_os("RM_BAIDU_DEBUG").is_some() {
++                    eprintln!("[baidu] xpan filemetas err = {e}");
++                }
++            }
++        }
++    }
++    Err("未取到下载直链（可能是会员专属文件或权限不足）".into())
++}
++
++fn first_dlink(v: &serde_json::Value) -> Option<String> {
++    let arr = v
++        .get("list")
++        .or_else(|| v.get("info"))
++        .and_then(|x| x.as_array())?;
++    let d = arr
++        .first()?
++        .get("dlink")
++        .and_then(|x| x.as_str())
++        .unwrap_or("");
++    if d.is_empty() {
++        None
++    } else {
++        Some(d.to_string())
++    }
++}
++
++// ---------- 扫码登录（百度 passport 的二维码通道） ----------
++//
++// 流程（与网页版一致）：
++//   1. getqrcode → sign（同时就是轮询用的 channel_id）+ 二维码图片
++//   2. channel/unicast 长轮询：未扫码时挂住（读超时即视为"等待中"），
++//      扫码后返回 channel_v = {"status":0}（待确认）或 {"v":"…","status":1}（已确认）
++//   3. bdussign?v=… → 拿到 BDUSS / STOKEN，等同于网页登录后的 cookie
++//
++// 之所以不走「应用内开 WebView 打开登录页」：passport 的登录框依赖一串 CDN 脚本，
++// 在 WKWebView 里经常只渲染出背景插画（实测），而二维码接口是稳定的明文协议。
++
++const PASSPORT: &str = "https://passport.baidu.com";
++
++#[derive(Serialize)]
++#[serde(rename_all = "camelCase")]
++pub struct QrTicket {
++    pub sign: String,
++    /// data:image/png;base64,… 直接给 <img src>
++    pub image: String,
++    pub prompt: String,
++}
++
++#[derive(Serialize, Default)]
++#[serde(rename_all = "camelCase")]
++pub struct QrState {
++    /// waiting | scanned | done | expired
++    pub state: String,
++    pub user: String,
++}
++
++/* ── cookie jar（passport 的登录态要靠一串 cookie 串起来） ────────── */
++
++fn jar() -> &'static std::sync::Mutex<std::collections::HashMap<String, String>> {
++    static JAR: std::sync::OnceLock<std::sync::Mutex<std::collections::HashMap<String, String>>> =
++        std::sync::OnceLock::new();
++    JAR.get_or_init(|| std::sync::Mutex::new(std::collections::HashMap::new()))
++}
++
++fn jar_cookie_header() -> String {
++    let j = jar().lock().unwrap_or_else(|e| e.into_inner());
++    j.iter()
++        .map(|(k, v)| format!("{k}={v}"))
++        .collect::<Vec<_>>()
++        .join("; ")
++}
++
++fn jar_absorb(resp: &ureq::Response) {
++    let mut j = jar().lock().unwrap_or_else(|e| e.into_inner());
++    for raw in resp.all("set-cookie") {
++        let first = raw.split(';').next().unwrap_or("");
++        if let Some((k, v)) = first.split_once('=') {
++            let k = k.trim();
++            let v = v.trim();
++            if !k.is_empty() {
++                if v.is_empty() {
++                    j.remove(k);
++                } else {
++                    j.insert(k.to_string(), v.to_string());
++                }
++            }
++        }
++    }
++}
++
++fn passport_agent(read_secs: u64) -> ureq::Agent {
++    ureq::AgentBuilder::new()
++        .timeout_connect(Duration::from_secs(8))
++        .timeout_read(Duration::from_secs(read_secs))
++        .user_agent(WEB_UA)
++        .build()
++}
++
++fn passport_get(a: &ureq::Agent, url: &str) -> Result<ureq::Response, ureq::Error> {
++    let cookie = jar_cookie_header();
++    let mut req = a
++        .get(url)
++        .set("Referer", &format!("{PASSPORT}/"))
++        .set("Accept", "application/json, text/plain, */*");
++    if !cookie.is_empty() {
++        req = req.set("Cookie", &cookie);
++    }
++    // 4xx/5xx 也把响应体交回去：百度的报错信息在 body 里，比状态码有用
++    let resp = match req.call() {
++        Ok(r) => r,
++        Err(ureq::Error::Status(_, r)) => r,
++        Err(e) => return Err(e),
++    };
++    jar_absorb(&resp);
++    Ok(resp)
++}
++
++/// 百度这类接口偶尔会包一层 `callback({...})`，统一剥掉再解析
++fn strip_jsonp(text: &str) -> &str {
++    let t = text.trim();
++    if let (Some(open), Some(_close)) = (t.find('('), t.rfind(')')) {
++        if open > 0 && !t.starts_with('{') && !t.starts_with('[') {
++            return t[open + 1..t.rfind(')').unwrap_or(t.len())].trim();
++        }
++    }
++    t
++}
++
++pub fn qr_begin() -> Result<QrTicket, String> {
++    let a = passport_agent(20);
++    let t = now_ms();
++    let url = format!("{PASSPORT}/v2/api/getqrcode?lp=pc&qrloginfrom=pc&t={t}");
++    let resp = crate::net::with_retry(|| passport_get(&a, &url))?;
++    let text = resp
++        .into_string()
++        .map_err(|e| format!("获取二维码失败：{e}"))?;
++    let v: serde_json::Value = serde_json::from_str(strip_jsonp(&text))
++        .map_err(|_| format!("获取二维码失败：返回内容异常（{}）", text.chars().take(120).collect::<String>()))?;
++    let errno = v.get("errno").and_then(|x| x.as_i64()).unwrap_or(-1);
++    if errno != 0 {
++        return Err(format!("获取二维码失败（errno {errno}）"));
++    }
++    let sign = v
++        .get("sign")
++        .and_then(|x| x.as_str())
++        .unwrap_or("")
++        .to_string();
++    if sign.is_empty() {
++        return Err("百度没有返回二维码标识，请重试".into());
++    }
++    let prompt = v
++        .get("prompt")
++        .and_then(|x| x.as_str())
++        .unwrap_or("请用手机百度 App 扫码登录")
++        .to_string();
++
++    // 二维码图片（245×245 PNG）
++    let img_url = format!("{PASSPORT}/v2/api/qrcode?sign={sign}&lp=pc&qrloginfrom=pc");
++    let resp = crate::net::with_retry(|| passport_get(&a, &img_url))?;
++    let mut buf: Vec<u8> = Vec::new();
++    resp.into_reader()
++        .read_to_end(&mut buf)
++        .map_err(|e| format!("读取二维码图片失败：{e}"))?;
++    if buf.len() < 64 {
++        return Err("二维码图片为空，请重试".into());
++    }
++    use base64::Engine as _;
++    let image = format!(
++        "data:image/png;base64,{}",
++        base64::engine::general_purpose::STANDARD.encode(&buf)
++    );
++    Ok(QrTicket {
++        sign,
++        image,
++        prompt,
++    })
++}
++
++/// 轮询扫码状态。`state` 取值：waiting / scanned / done / expired
++pub fn qr_poll(state: &AppState, sign: &str) -> Result<QrState, String> {
++    if sign.trim().is_empty() {
++        return Err("二维码已失效，请刷新".into());
++    }
++    let a = passport_agent(6);
++    let url = format!(
++        "{PASSPORT}/channel/unicast?channel_id={}&t={}&callback=",
++        sign,
++        now_ms()
++    );
++    let body = match passport_get(&a, &url) {
++        Ok(resp) => resp.into_string().unwrap_or_default(),
++        // 长轮询读超时 / 网络抖动 = 还没有人扫码
++        Err(_) => {
++            return Ok(QrState {
++                state: "waiting".into(),
++                user: String::new(),
++            })
++        }
++    };
++    let body = strip_jsonp(&body).trim();
++    if body.is_empty() {
++        return Ok(QrState {
++            state: "waiting".into(),
++            user: String::new(),
++        });
++    }
++    let v: serde_json::Value = match serde_json::from_str(body) {
++        Ok(v) => v,
++        Err(_) => {
++            return Ok(QrState {
++                state: "waiting".into(),
++                user: String::new(),
++            })
++        }
++    };
++    if std::env::var_os("RM_BAIDU_DEBUG").is_some() {
++        eprintln!("[baidu] poll body = {body}");
++    }
++    // 百度偶尔对同一 channel 的并发查询返回非 0：当成"还没扫码"继续等，
++    // 真正的过期由前端按时间判断，避免误杀还在等确认的二维码。
++    let errno = v.get("errno").and_then(|x| x.as_i64()).unwrap_or(0);
++    if errno != 0 {
++        return Ok(QrState {
++            state: "waiting".into(),
++            user: String::new(),
++        });
++    }
++    let channel_v = v.get("channel_v").and_then(|x| x.as_str()).unwrap_or("");
++    if channel_v.is_empty() {
++        return Ok(QrState {
++            state: "waiting".into(),
++            user: String::new(),
++        });
++    }
++    let inner: serde_json::Value =
++        serde_json::from_str(channel_v).unwrap_or(serde_json::Value::Null);
++    let status = inner.get("status").and_then(|x| x.as_i64()).unwrap_or(-1);
++    let token = inner.get("v").and_then(|x| x.as_str()).unwrap_or("");
++    if status == 0 && token.is_empty() {
++        // 已扫码，等手机上点「确认登录」
++        return Ok(QrState {
++            state: "scanned".into(),
++            user: String::new(),
++        });
++    }
++    if token.is_empty() {
++        return Ok(QrState {
++            state: "waiting".into(),
++            user: String::new(),
++        });
++    }
++
++    // 确认后换 BDUSS：登录页真实走的是 /v3/login/main/qrbdusslogin
++    // （channel_v.v 本身是临时 bduss，这个接口把它换成正式登录态并回写 cookie）
++    let token = token_value(token);
++    let url = format!(
++        "{PASSPORT}/v3/login/main/qrbdusslogin?v={}&bduss={}&u=&loginVersion=v4&qrcode=1&tpl=netdisk&callback=cb",
++        now_ms(),
++        q(&token)
++    );
++    let resp = passport_get(&a, &url).map_err(|e| format!("换取登录态失败：{e}"))?;
++    let status = resp.status();
++    let cookies = resp
++        .all("set-cookie")
++        .iter()
++        .map(|c| c.to_string())
++        .collect::<Vec<_>>();
++    let text = resp.into_string().unwrap_or_default();
++    if std::env::var_os("RM_BAIDU_DEBUG").is_some() {
++        // 只打状态与长度，避免把 bduss/stoken 写进日志
++        eprintln!(
++            "[baidu] qrbdusslogin status = {status}, body_len = {}",
++            text.len()
++        );
++    }
++    let mut bduss = String::new();
++    let mut stoken = String::new();
++    let mut user = String::new();
++    let parsed = strip_jsonp(&text);
++    if let Ok(j) = serde_json::from_str::<serde_json::Value>(parsed) {
++        // 正常返回：{"errInfo":{"no":0,...},"data":{"session":{"bduss":…,"stoken":…},"user":{"username":…}}}
++        if let Some(d) = j.get("data") {
++            if let Some(sess) = d.get("session") {
++                bduss = sess.get("bduss").and_then(|x| x.as_str()).unwrap_or("").to_string();
++                stoken = sess.get("stoken").and_then(|x| x.as_str()).unwrap_or("").to_string();
++            }
++            if let Some(u) = d.get("user") {
++                user = u.get("username").and_then(|x| x.as_str()).unwrap_or("").to_string();
++                if user.is_empty() {
++                    user = u.get("displayName").and_then(|x| x.as_str()).unwrap_or("").to_string();
++                }
++            }
++        }
++        // 兜底：顶层的 bduss/stoken
++        if bduss.is_empty() {
++            bduss = j.get("bduss").and_then(|x| x.as_str()).unwrap_or("").to_string();
++        }
++        if stoken.is_empty() {
++            stoken = j.get("stoken").and_then(|x| x.as_str()).unwrap_or("").to_string();
++        }
++    }
++    for raw in &cookies {
++        let first = raw.split(';').next().unwrap_or("");
++        if let Some((k, val)) = first.split_once('=') {
++            if k.trim().eq_ignore_ascii_case("BDUSS") && bduss.is_empty() {
++                bduss = val.trim().to_string();
++            }
++            if k.trim().eq_ignore_ascii_case("STOKEN") && stoken.is_empty() {
++                stoken = val.trim().to_string();
++            }
++        }
++    }
++    if bduss.is_empty() {
++        let snippet: String = text.chars().take(160).collect();
++        return Err(format!(
++            "登录确认后没拿到百度登录态（HTTP {status}，响应：{}）",
++            snippet.replace('\n', " ")
++        ));
++    }
++
++    let user = {
++        let conn = state.db.lock();
++        save_login(&conn, &bduss, &stoken, "")?;
++        sync_profile(&conn).unwrap_or_default()
++    };
++    Ok(QrState {
++        state: "done".into(),
++        user,
++    })
++}
++
++/// 去掉 token 里可能带的 JSON 引号/转义
++fn token_value(raw: &str) -> String {
++    raw.trim_matches('"').replace("\\/", "/")
++}
 diff --git a/src-tauri/src/commands/app.rs b/src-tauri/src/commands/app.rs
 index 4f5162c..7b18fea 100644
 --- a/src-tauri/src/commands/app.rs
@@ -370,6 +1448,271 @@ index 4f5162c..7b18fea 100644
      // Windows：透明窗口 + WebView2 alpha=0 背景（纯悬浮文字形态）
      #[cfg(windows)]
      {
+diff --git a/src-tauri/src/commands/baidupan.rs b/src-tauri/src/commands/baidupan.rs
+new file mode 100644
+index 0000000..8db67bd
+--- /dev/null
++++ b/src-tauri/src/commands/baidupan.rs
+@@ -0,0 +1,239 @@
++//! 百度网盘音源的命令层（扫码登录、浏览、导入、播放）。
++//!
++//! 与其它在线音源一致：网络与凭据 IO 全部丢进阻塞线程池（`super::blocking`）。
++//! 阻塞任务不借用 `State`（闭包要求 'static），统一在任务体内用 `AppHandle`
++//! 重新取 `AppState`——与 `navidrome_play_task` 同一写法。
++//!
++//! 登录走百度 passport 的二维码通道（见 `crate::baidupan` 里的 qr_begin / qr_poll），
++//! 不需要用户注册开放平台应用，也不需要内嵌浏览器；前端只负责显示二维码并轮询。
++
++use tauri::{AppHandle, Manager, State};
++
++use crate::engine::TrackInfo;
++use crate::AppState;
++
++use super::blocking;
++use super::engine_clone;
++
++
++#[derive(serde::Serialize)]
++#[serde(rename_all = "camelCase")]
++pub struct BaiduStatus {
++    pub configured: bool,
++    pub authorized: bool,
++    pub user: String,
++}
++
++fn status_of(state: &AppState) -> BaiduStatus {
++    let user = {
++        let conn = state.db.lock();
++        crate::baidupan::user_name(&conn)
++    };
++    BaiduStatus {
++        configured: true,
++        authorized: crate::baidupan::authorized(),
++        user,
++    }
++}
++
++#[derive(serde::Deserialize)]
++#[serde(rename_all = "camelCase")]
++pub struct BdPlayReq {
++    pub fs_id: String,
++    #[serde(default)]
++    pub title: String,
++    #[serde(default)]
++    pub artist: String,
++    #[serde(default)]
++    pub album: String,
++    #[serde(default)]
++    pub ext: String,
++    #[serde(default)]
++    pub duration_ms: u64,
++}
++
++#[tauri::command]
++pub async fn baidu_status(app: AppHandle) -> Result<BaiduStatus, String> {
++    blocking(move || {
++        let state = app.state::<AppState>();
++        let st = state.inner();
++        let mut user = {
++            let conn = st.db.lock();
++            crate::baidupan::user_name(&conn)
++        };
++        // 已登录但还没存昵称（老会话）：顺手补一次，失败不影响状态
++        if user.is_empty() && crate::baidupan::authorized() {
++            let conn = st.db.lock();
++            user = crate::baidupan::sync_profile(&conn).unwrap_or_default();
++        }
++        Ok(BaiduStatus {
++            configured: true,
++            authorized: crate::baidupan::authorized(),
++            user,
++        })
++    })
++    .await
++}
++
++/// 取一张新的登录二维码（data:image/png;base64,…）
++#[tauri::command]
++pub async fn baidu_qr_begin() -> Result<crate::baidupan::QrTicket, String> {
++    blocking(crate::baidupan::qr_begin).await
++}
++
++/// 轮询扫码状态：waiting / scanned / done / expired
++#[tauri::command]
++pub async fn baidu_qr_poll(app: AppHandle, sign: String) -> Result<crate::baidupan::QrState, String> {
++    blocking(move || {
++        let st = app.state::<AppState>();
++        crate::baidupan::qr_poll(st.inner(), &sign)
++    })
++    .await
++}
++
++#[tauri::command]
++pub async fn baidu_logout(state: State<'_, AppState>) -> Result<BaiduStatus, String> {
++    {
++        let conn = state.db.lock();
++        crate::baidupan::logout(&conn);
++    }
++    Ok(status_of(&state))
++}
++
++#[tauri::command]
++pub async fn baidu_list(
++    app: AppHandle,
++    dir: String,
++) -> Result<Vec<crate::baidupan::BdItem>, String> {
++    blocking(move || {
++        let st = app.state::<AppState>();
++        crate::baidupan::with_session(st.inner(), |s| crate::baidupan::list_dir(s, &dir))
++    })
++    .await
++}
++
++#[tauri::command]
++pub async fn baidu_import(
++    app: AppHandle,
++    dir: String,
++) -> Result<crate::baidupan::ImportStat, String> {
++    blocking(move || {
++        let st = app.state::<AppState>();
++        crate::baidupan::import_root(st.inner(), &dir)
++    })
++    .await
++}
++
++#[tauri::command]
++pub async fn baidu_roots(
++    state: State<'_, AppState>,
++) -> Result<Vec<crate::baidupan::RootInfo>, String> {
++    let conn = state.db.lock();
++    Ok(crate::baidupan::roots(&conn))
++}
++
++#[tauri::command]
++pub async fn baidu_remove_root(app: AppHandle, root: String) -> Result<u32, String> {
++    blocking(move || {
++        let st = app.state::<AppState>();
++        crate::baidupan::remove_root(st.inner(), &root)
++    })
++    .await
++}
++
++#[tauri::command]
++pub async fn baidu_albums(
++    state: State<'_, AppState>,
++) -> Result<Vec<crate::baidupan::BdAlbum>, String> {
++    let conn = state.db.lock();
++    Ok(crate::baidupan::albums(&conn))
++}
++
++#[tauri::command]
++pub async fn baidu_album_tracks(
++    state: State<'_, AppState>,
++    album: String,
++) -> Result<Vec<crate::baidupan::BdTrack>, String> {
++    let conn = state.db.lock();
++    Ok(crate::baidupan::album_tracks(&conn, &album))
++}
++
++#[tauri::command]
++pub async fn baidu_all_tracks(
++    state: State<'_, AppState>,
++) -> Result<Vec<crate::baidupan::BdTrack>, String> {
++    let conn = state.db.lock();
++    Ok(crate::baidupan::all_tracks(&conn))
++}
++
++/// 播放：现取 dlink（限时签名，约 8 小时）→ 交给引擎边下边播
++#[tauri::command]
++pub async fn baidu_play(app: AppHandle, track: BdPlayReq) -> Result<(), String> {
++    blocking(move || baidu_play_task(&app, track)).await
++}
++
++fn baidu_play_task(app: &AppHandle, track: BdPlayReq) -> Result<(), String> {
++    let state = app.state::<AppState>();
++    let st = state.inner();
++    // 直链优先用「路径」查（网页接口认 cookie）；导入过的曲子路径存在库里
++    let path = {
++        let conn = st.db.lock();
++        crate::db::baidu_path_of(&conn, &track.fs_id).unwrap_or_default()
++    };
++    let url = crate::baidupan::with_session(st, |s| {
++        crate::baidupan::dlink(s, &track.fs_id, &path)
++    })?;
++    let info = TrackInfo {
++        id: None,
++        kind: crate::baidupan::KIND.into(),
++        path: String::new(),
++        title: track.title,
++        artist: track.artist,
++        album: track.album,
++        cover: String::new(),
++        duration_ms: track.duration_ms,
++        nid: None,
++        qid: Some(track.fs_id),
++        kgid: None,
++        quality: if track.ext.is_empty() {
++            None
++        } else {
++            Some(track.ext)
++        },
++    };
++    super::record_online_play(&state, &info, "", false);
++    engine_clone(&state).play_url(url, info)
++}
++
++/// 试听：浏览目录时直接听某个网盘文件（不写播放记录）
++#[tauri::command]
++pub async fn baidu_preview(app: AppHandle, fs_id: String, path: String) -> Result<(), String> {
++    blocking(move || {
++        let state = app.state::<AppState>();
++        let st = state.inner();
++        let url = crate::baidupan::with_session(st, |s| {
++            crate::baidupan::dlink(s, &fs_id, &path)
++        })?;
++        let name = path.rsplit('/').next().unwrap_or("网盘音频").to_string();
++        let title = name
++            .rsplit_once('.')
++            .map(|(a, _)| a.to_string())
++            .unwrap_or(name);
++        let info = TrackInfo {
++            id: None,
++            kind: crate::baidupan::KIND.into(),
++            path: String::new(),
++            title,
++            artist: String::new(),
++            album: String::new(),
++            cover: String::new(),
++            duration_ms: 0,
++            nid: None,
++            qid: Some(fs_id),
++            kgid: None,
++            quality: None,
++        };
++        engine_clone(&state).play_url(url, info)
++    })
++    .await
++}
+diff --git a/src-tauri/src/commands/mod.rs b/src-tauri/src/commands/mod.rs
+index 5685812..2f6f052 100644
+--- a/src-tauri/src/commands/mod.rs
++++ b/src-tauri/src/commands/mod.rs
+@@ -1,6 +1,7 @@
+ //! 命令层：按业务域拆分为子模块，对外仍以 `commands::命令名` 统一暴露
+ //! （pub use 再导出，main.rs 的 generate_handler! 注册路径保持不变）。
+ mod app;
++mod baidupan;
+ mod bilibili;
+ mod download;
+ mod kugou;
+@@ -16,6 +17,7 @@ mod sources;
+ mod updater;
+ 
+ pub use app::*;
++pub use baidupan::*;
+ pub use bilibili::*;
+ pub use download::*;
+ pub use kugou::*;
 diff --git a/src-tauri/src/credentials.rs b/src-tauri/src/credentials.rs
 index 8f9daa2..b72182f 100644
 --- a/src-tauri/src/credentials.rs
@@ -412,11 +1755,150 @@ index 8f9daa2..b72182f 100644
  }
  
  /// 清除平台 token（幂等）
+diff --git a/src-tauri/src/db.rs b/src-tauri/src/db.rs
+index 277bade..2d11033 100644
+--- a/src-tauri/src/db.rs
++++ b/src-tauri/src/db.rs
+@@ -87,6 +87,21 @@ CREATE TABLE IF NOT EXISTS online_tracks (
+   play_count INTEGER NOT NULL DEFAULT 0,
+   UNIQUE(kind, rid)
+ );
++-- 百度网盘导入的音乐文件：网盘没有曲库检索接口，只能按文件夹导入后本地索引
++-- （fs_id 是网盘内的稳定文件标识，路径/歌名会随用户整理变化，故以它为键）
++CREATE TABLE IF NOT EXISTS baidu_tracks (
++  fs_id TEXT PRIMARY KEY,
++  root TEXT NOT NULL DEFAULT '',
++  path TEXT NOT NULL DEFAULT '',
++  album TEXT NOT NULL DEFAULT '',
++  artist TEXT NOT NULL DEFAULT '',
++  title TEXT NOT NULL DEFAULT '',
++  ext TEXT NOT NULL DEFAULT '',
++  size INTEGER NOT NULL DEFAULT 0,
++  mtime INTEGER NOT NULL DEFAULT 0,
++  imported_at INTEGER NOT NULL DEFAULT 0
++);
++CREATE INDEX IF NOT EXISTS idx_baidu_album ON baidu_tracks(album, title);
+ CREATE TABLE IF NOT EXISTS liked_online (
+   rowid INTEGER PRIMARY KEY AUTOINCREMENT,
+   kind TEXT NOT NULL,
+@@ -1725,3 +1740,14 @@ mod migration_tests {
+         assert!(miss.is_none());
+     }
+ }
++
++/// 取某首网盘曲目的绝对路径（导入时记录）
++pub fn baidu_path_of(conn: &Connection, fs_id: &str) -> Option<String> {
++    conn.query_row(
++        "select path from baidu_tracks where fs_id = ?1",
++        rusqlite::params![fs_id],
++        |r| r.get::<_, String>(0),
++    )
++    .ok()
++}
++
+diff --git a/src-tauri/src/engine/cache.rs b/src-tauri/src/engine/cache.rs
+index 11ee2a4..8c325da 100644
+--- a/src-tauri/src/engine/cache.rs
++++ b/src-tauri/src/engine/cache.rs
+@@ -62,6 +62,9 @@ impl Engine {
+             // Navidrome：qid 为歌曲 id（流地址里的 salt/token 每次都变，
+             // 不能按 URL 哈希，否则永远不命中缓存）
+             ("navidrome", _, Some(qid), _) => format!("nd-{qid}-{q}"),
++            // 百度网盘：qid 为 fs_id（dlink 是限时签名地址，每次播放都变，
++            // 同样不能按 URL 哈希，否则重复下载同一首歌）
++            ("baidu", _, Some(qid), _) => format!("bd-{qid}-{q}"),
+             // 自定义在线音源没有稳定 ID，仍按 URL 哈希
+             _ => {
+                 use std::hash::{Hash, Hasher};
+@@ -115,7 +118,7 @@ impl Engine {
+         }
+         // B 站 CDN 直链必须带 Referer/UA（部分边缘节点裸请求 403）；
+         // 且 playurl 每次可能返回不同 CDN 主机，不能按主机名判断，按来源标记
+-        let is_bili = info.kind == "bilibili";
++        let src_kind = info.kind.clone();
+         let engine = Arc::clone(self);
+         let app = self.app.clone();
+ 
+@@ -181,7 +184,7 @@ impl Engine {
+         }
+ 
+         std::thread::spawn(move || {
+-            let result = download_to(&app, &url, &cache, is_bili, Some(&shared));
++            let result = download_to(&app, &url, &cache, &src_kind, Some(&shared));
+             engine.downloading.write().remove(&key);
+             match result {
+                 Err(e) => {
+@@ -350,10 +353,10 @@ fn download_to(
+     app: &AppHandle,
+     url: &str,
+     dest: &Path,
+-    with_bili_headers: bool,
++    src_kind: &str,
+     stream: Option<&Arc<crate::streaming::StreamingDownload>>,
+ ) -> Result<(), String> {
+-    let r = download_inner(app, url, dest, with_bili_headers, stream);
++    let r = download_inner(app, url, dest, src_kind, stream);
+     if let Some(s) = stream {
+         // 保证失败时读取端也能立即终止（成功路径已在 inner 内 finish）
+         if r.is_err() {
+@@ -367,7 +370,7 @@ fn download_inner(
+     app: &AppHandle,
+     url: &str,
+     dest: &Path,
+-    with_bili_headers: bool,
++    src_kind: &str,
+     stream: Option<&Arc<crate::streaming::StreamingDownload>>,
+ ) -> Result<(), String> {
+     let part = dest.with_extension("part");
+@@ -378,10 +381,16 @@ fn download_inner(
+         .build();
+     let mut req = agent.get(url);
+     // B 站 CDN 直链必须带 Referer 与浏览器 UA，否则部分边缘节点裸请求 403
+-    if with_bili_headers {
++    if src_kind == "bilibili" {
+         req = req
+             .set("Referer", "https://www.bilibili.com/")
+             .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36");
++    } else if src_kind == "baidu" {
++        // 百度网盘 dlink 除了强制 UA，还要带登录 cookie，否则 403
++        req = req.set("User-Agent", crate::baidupan::DOWNLOAD_UA);
++        if let Some(cookie) = crate::baidupan::download_cookie() {
++            req = req.set("Cookie", &cookie);
++        }
+     }
+     // 连接建立传输级重试（issue#8-2：网络/代理切换后死连接自愈）。
+     // 仅重试"拿到响应头之前"的失败——此刻尚未向流式读取端发布过字节，
+diff --git a/src-tauri/src/engine/mod.rs b/src-tauri/src/engine/mod.rs
+index 53eca78..63de889 100644
+--- a/src-tauri/src/engine/mod.rs
++++ b/src-tauri/src/engine/mod.rs
+@@ -143,12 +143,12 @@ impl Engine {
+         let _ = std::fs::create_dir_all(&downloads_dir);
+         // 旧版缓存按 URL 哈希命名（无稳定前缀），链接签名变化导致
+         // 这些文件永不再命中，启动时清掉以免白占磁盘。
+-        // 白名单必须覆盖全部缓存键前缀（net/qq/kug/bili/nd/url，见 cache_key_for），
++        // 白名单必须覆盖全部缓存键前缀（net/qq/kug/bili/nd/bd/url，见 cache_key_for），
+         // 漏掉的前缀会被误当旧文件删光——该音源缓存将永远活不过一次重启
+         if let Ok(rd) = std::fs::read_dir(&downloads_dir) {
+             for e in rd.flatten() {
+                 let name = e.file_name().to_string_lossy().into_owned();
+-                let recognized = ["net-", "qq-", "kug-", "bili-", "nd-", "url-"]
++                let recognized = ["net-", "qq-", "kug-", "bili-", "nd-", "bd-", "url-"]
+                     .iter()
+                     .any(|p| name.starts_with(p));
+                 if !recognized {
 diff --git a/src-tauri/src/main.rs b/src-tauri/src/main.rs
-index 3a081c3..16bb6dd 100644
+index 3a081c3..6a243e3 100644
 --- a/src-tauri/src/main.rs
 +++ b/src-tauri/src/main.rs
-@@ -17,6 +17,8 @@ mod net;
+@@ -1,5 +1,6 @@
+ #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+ 
++mod baidupan;
+ mod bilibili;
+ mod commands;
+ mod credentials;
+@@ -17,6 +18,8 @@ mod net;
  mod netease;
  mod qq;
  mod qrc;
@@ -425,7 +1907,7 @@ index 3a081c3..16bb6dd 100644
  #[cfg(test)]
  mod quality_audit;
  mod smtc;
-@@ -175,6 +177,52 @@ fn main() {
+@@ -175,6 +178,52 @@ fn main() {
                      let _ = main.set_focus();
                  }
              }
@@ -478,7 +1960,7 @@ index 3a081c3..16bb6dd 100644
              // 无框窗口关掉 DWM 边框后 Win11 会失去圆角，这里单独设回圆角
              //（DWMWA_WINDOW_CORNER_PREFERENCE = ROUND；Win10 无此属性，静默忽略）
              #[cfg(windows)]
-@@ -214,6 +262,7 @@ fn main() {
+@@ -214,6 +263,7 @@ fn main() {
                  }
              }
              let app_data = handle.path().app_data_dir().map_err(|e| e.to_string())?;
@@ -486,7 +1968,28 @@ index 3a081c3..16bb6dd 100644
              std::fs::create_dir_all(app_data.join("covers")).map_err(|e| e.to_string())?;
              std::fs::create_dir_all(app_data.join("downloads")).map_err(|e| e.to_string())?;
  
-@@ -468,6 +517,15 @@ fn main() {
+@@ -343,6 +393,20 @@ fn main() {
+             commands::navidrome_all_songs,
+             commands::navidrome_play,
+             commands::navidrome_lyric,
++            commands::baidu_status,
++            commands::baidu_qr_begin,
++            commands::baidu_qr_poll,
++            commands::baidu_logout,
++            commands::baidu_list,
++            commands::baidu_import,
++            commands::baidu_roots,
++            commands::baidu_remove_root,
++            commands::baidu_albums,
++            commands::baidu_album_tracks,
++            commands::baidu_all_tracks,
++            commands::baidu_play,
++            commands::baidu_preview,
++
+             commands::kugou_search,
+             commands::kugou_play,
+             commands::kugou_lyric,
+@@ -468,6 +532,15 @@ fn main() {
              commands::set_auto_update,
              commands::open_url,
          ])
@@ -735,9 +2238,18 @@ index 0b09e08..05600e9 100644
          .menu(&menu)
          .show_menu_on_left_click(false)
 diff --git a/src-tauri/tauri.conf.json b/src-tauri/tauri.conf.json
-index 66c366d..68206e1 100644
+index 66c366d..7a1a3c2 100644
 --- a/src-tauri/tauri.conf.json
 +++ b/src-tauri/tauri.conf.json
+@@ -1,7 +1,7 @@
+ {
+   "$schema": "https://schema.tauri.app/config/2",
+   "productName": "RustMusic",
+-  "version": "0.7.1",
++  "version": "0.7.2",
+   "identifier": "com.rustmusic.app",
+   "build": {
+     "beforeDevCommand": "npm run dev",
 @@ -11,6 +11,7 @@
    },
    "app": {
@@ -814,6 +2326,44 @@ index 0000000..7e720db
 +    "targets": ["app", "dmg"]
 +  }
 +}
+diff --git a/src/api.ts b/src/api.ts
+index fe6a970..7160aa3 100644
+--- a/src/api.ts
++++ b/src/api.ts
+@@ -343,6 +343,33 @@ export const api = {
+       durationMs: number;
+     }
+   ) => invoke<void>("navidrome_play", { server, username, track }),
++  /* ── 百度网盘音源 ── */
++  baiduStatus: () => invoke<import("./types").BaiduStatus>("baidu_status"),
++  baiduQrBegin: () => invoke<import("./types").BaiduQrTicket>("baidu_qr_begin"),
++  baiduQrPoll: (sign: string) =>
++    invoke<import("./types").BaiduQrState>("baidu_qr_poll", { sign }),
++  baiduLogout: () => invoke<import("./types").BaiduStatus>("baidu_logout"),
++  baiduList: (dir: string) =>
++    invoke<import("./types").BdItem[]>("baidu_list", { dir }),
++  baiduImport: (dir: string) =>
++    invoke<import("./types").BaiduImportStat>("baidu_import", { dir }),
++  baiduRoots: () => invoke<import("./types").BaiduRootInfo[]>("baidu_roots"),
++  baiduRemoveRoot: (root: string) => invoke<number>("baidu_remove_root", { root }),
++  baiduAlbums: () => invoke<import("./types").BdAlbum[]>("baidu_albums"),
++  baiduAlbumTracks: (album: string) =>
++    invoke<import("./types").BdTrack[]>("baidu_album_tracks", { album }),
++  baiduAllTracks: () => invoke<import("./types").BdTrack[]>("baidu_all_tracks"),
++  baiduPlay: (track: {
++    fsId: string;
++    title: string;
++    artist: string;
++    album: string;
++    ext: string;
++    durationMs: number;
++  }) => invoke<void>("baidu_play", { track }),
++  baiduPreview: (fsId: string, path: string) =>
++    invoke<void>("baidu_preview", { fsId, path }),
++
+   navidromeForget: (server: string, username: string) =>
+     invoke<void>("navidrome_forget", { server, username }),
+   navidromeLyric: (id: string) =>
 diff --git a/src/components/Sidebar.liquid.tsx b/src/components/Sidebar.liquid.tsx
 index 5db923e..44524ca 100644
 --- a/src/components/Sidebar.liquid.tsx
@@ -968,6 +2518,109 @@ index 981c16d..d2aa007 100644
  
  ReactDOM.createRoot(document.getElementById("root")!).render(
    <React.StrictMode>
+diff --git a/src/store/contract.ts b/src/store/contract.ts
+index ccde581..f926829 100644
+--- a/src/store/contract.ts
++++ b/src/store/contract.ts
+@@ -129,8 +129,8 @@ export interface Store {
+       | ((cur: import("../types").SourcesResult | null) => import("../types").SourcesResult | null)
+   ): void;
+   /** 在线音源页当前音源页签（切页保留） */
+-  sourcesTab: "bilibili" | "navidrome" | "other" | "downloads";
+-  setSourcesTab(t: "bilibili" | "navidrome" | "other" | "downloads"): void;
++  sourcesTab: "bilibili" | "baidu" | "navidrome" | "other" | "downloads";
++  setSourcesTab(t: "bilibili" | "baidu" | "navidrome" | "other" | "downloads"): void;
+ 
+   quality: string;
+   /** 三源分别的播放音质（standard/high/lossless/hires，qq 另有 master=甄品母带） */
+diff --git a/src/types.ts b/src/types.ts
+index b9398fe..06a6c93 100644
+--- a/src/types.ts
++++ b/src/types.ts
+@@ -306,7 +306,82 @@ export interface CurrentTrack extends TrackInfo {
+ 
+ export type RepeatMode = "off" | "all" | "one";
+ 
+-export type QueueItemKind = "track" | "url" | "netease" | "qq" | "kugou" | "bilibili" | "navidrome";
++/* ── 百度网盘音源 ─────────────────────────────────────────── */
++
++export interface BaiduStatus {
++  /** 预留字段（扫码登录不需要用户配置应用） */
++  configured: boolean;
++  /** 是否持有可用的 BDUSS 会话 */
++  authorized: boolean;
++  /** 网盘昵称（登录后才有） */
++  user: string;
++}
++
++/** 登录二维码（image 是 data:image/png;base64,…） */
++export interface BaiduQrTicket {
++  sign: string;
++  image: string;
++  prompt: string;
++}
++
++/** 扫码状态：waiting | scanned | done | expired */
++export interface BaiduQrState {
++  state: "waiting" | "scanned" | "done" | "expired";
++  user: string;
++}
++
++/** 网盘目录项（浏览用） */
++export interface BdItem {
++  fsId: string;
++  name: string;
++  path: string;
++  isDir: boolean;
++  size: number;
++  mtime: number;
++  ext: string;
++}
++
++/** 已导入的曲目 */
++export interface BdTrack {
++  fsId: string;
++  title: string;
++  artist: string;
++  album: string;
++  ext: string;
++  size: number;
++  path: string;
++}
++
++export interface BdAlbum {
++  album: string;
++  artist: string;
++  count: number;
++  size: number;
++}
++
++/** 已导入的根目录 */
++export interface BaiduRootInfo {
++  root: string;
++  count: number;
++  size: number;
++}
++
++export interface BaiduImportStat {
++  root: string;
++  scanned: number;
++  imported: number;
++  skipped: number;
++}
++
++export type QueueItemKind =
++  | "track"
++  | "url"
++  | "netease"
++  | "qq"
++  | "kugou"
++  | "bilibili"
++  | "navidrome"
++  | "baidu";
+ 
+ export type QueueItem =
+   | { kind: "track" | "netease" | "url"; id: number }
 diff --git a/src/utils.ts b/src/utils.ts
 index 4f57a27..65742af 100644
 --- a/src/utils.ts
@@ -990,6 +2643,627 @@ index 4f57a27..65742af 100644
  /** 当前播放位置对应的歌词行（无同步歌词返回 null） */
  export function fmtTime(ms: number): string {
    if (!isFinite(ms) || ms <= 0) return "0:00";
+diff --git a/src/views/BaiduPanPanel.tsx b/src/views/BaiduPanPanel.tsx
+new file mode 100644
+index 0000000..5060c1f
+--- /dev/null
++++ b/src/views/BaiduPanPanel.tsx
+@@ -0,0 +1,615 @@
++//! 百度网盘音源面板（三个界面风格共用）。
++//!
++//! 只用 `--shade/--line/--ink*` 这套 CSS 变量和 `btn-primary/btn-secondary`，
++//! 因此标准 / 拟物 / 液态玻璃三套主题下都能直接复用同一个组件。
++//!
++//! 流程：点「扫码登录」→ 后端取一张百度登录二维码（passport 的 getqrcode 接口）
++//! → 面板里直接显示二维码 → 手机百度 App 扫码并确认 → 前端轮询到 done
++//! → 浏览网盘目录 →「导入该文件夹」把目录树里的音频收进本地库 → 按专辑 / 单曲播放。
++
++import { useCallback, useEffect, useMemo, useRef, useState } from "react";
++import {
++  Album as AlbumIcon,
++  ArrowLeft,
++  ChevronRight,
++  Cloud,
++  FolderClosed,
++  FolderPlus,
++  Loader2,
++  LogOut,
++  Music2,
++  Play,
++  QrCode,
++  RefreshCw,
++  ShieldCheck,
++  Trash2,
++  User,
++} from "lucide-react";
++import { api } from "../api";
++import { useStore } from "../store";
++import type {
++  BdAlbum,
++  BdItem,
++  BdTrack,
++  BaiduQrTicket,
++  BaiduRootInfo,
++  BaiduStatus,
++} from "../types";
++
++/** 与后端 `AUDIO_EXTS` 保持一致：能解码的才允许直接播 */
++const AUDIO_EXT = new Set(["mp3", "flac", "wav", "ogg", "oga", "m4a", "aac", "mp4", "m4b"]);
++
++function fmtSize(n: number): string {
++  if (!n) return "—";
++  if (n < 1024) return `${n}B`;
++  if (n < 1024 * 1024) return `${(n / 1024).toFixed(0)}KB`;
++  if (n < 1024 * 1024 * 1024) return `${(n / 1024 / 1024).toFixed(1)}MB`;
++  return `${(n / 1024 / 1024 / 1024).toFixed(2)}GB`;
++}
++
++/** 把网盘绝对路径拆成面包屑（"我的资源/音乐/V家专辑" → ["我的资源","音乐","V家专辑"]） */
++function crumbs(dir: string): { name: string; path: string }[] {
++  const parts = dir.split("/").filter(Boolean);
++  const out: { name: string; path: string }[] = [{ name: "我的网盘", path: "/" }];
++  let acc = "";
++  for (const p of parts) {
++    acc += `/${p}`;
++    out.push({ name: p, path: acc });
++  }
++  return out;
++}
++
++
++export default function BaiduPanPanel() {
++  const toast = useStore((s) => s.toast);
++
++  const [status, setStatus] = useState<BaiduStatus | null>(null);
++  const [busy, setBusy] = useState("");
++  const [dir, setDir] = useState("");
++  const [items, setItems] = useState<BdItem[]>([]);
++  const [roots, setRoots] = useState<BaiduRootInfo[]>([]);
++  const [albums, setAlbums] = useState<BdAlbum[]>([]);
++  const [openAlbum, setOpenAlbum] = useState<{ album: string; tracks: BdTrack[] } | null>(null);
++  const [playingId, setPlayingId] = useState<string | null>(null);
++
++  const authorized = !!status?.authorized;
++  const [qr, setQr] = useState<BaiduQrTicket | null>(null);
++  /** 二维码轮询定时器 */
++  const pollRef = useRef<number | null>(null);
++
++  const loadStatus = useCallback(async () => {
++    try {
++      setStatus(await api.baiduStatus());
++    } catch (e) {
++      toast(String(e), "error");
++    }
++  }, [toast]);
++
++  const loadRoots = useCallback(async () => {
++    try {
++      setRoots(await api.baiduRoots());
++      setAlbums(await api.baiduAlbums());
++    } catch (e) {
++      toast(String(e), "error");
++    }
++  }, [toast]);
++
++  const loadDir = useCallback(
++    async (target: string) => {
++      setBusy("list");
++      try {
++        const list = await api.baiduList(target);
++        setItems(list);
++        setDir(target);
++        setOpenAlbum(null);
++      } catch (e) {
++        toast(String(e), "error");
++      } finally {
++        setBusy("");
++      }
++    },
++    [toast],
++  );
++
++  useEffect(() => {
++    void loadStatus();
++    void loadRoots();
++  }, [loadStatus, loadRoots]);
++
++  const stopPoll = useCallback(() => {
++    if (pollRef.current !== null) {
++      window.clearTimeout(pollRef.current);
++      pollRef.current = null;
++    }
++  }, []);
++
++  // 组件卸载时收掉定时器
++  useEffect(() => stopPoll, [stopPoll]);
++
++  // 登录态就绪时自动展开根目录
++  useEffect(() => {
++    if (authorized && !dir && !busy) void loadDir("/");
++    // eslint-disable-next-line react-hooks/exhaustive-deps
++  }, [authorized]);
++
++  const { dirs, files } = useMemo(() => {
++    const d: BdItem[] = [];
++    const f: BdItem[] = [];
++    for (const it of items) {
++      if (it.isDir) d.push(it);
++      else if (AUDIO_EXT.has(it.ext.toLowerCase())) f.push(it);
++    }
++    const byName = (a: BdItem, b: BdItem) =>
++      a.name.localeCompare(b.name, "zh-Hans-CN", { numeric: true });
++    return { dirs: d.sort(byName), files: f.sort(byName) };
++  }, [items]);
++
++  /** 取一张新二维码并开始轮询（串行：上一次返回后再排下一次，避免并发长轮询） */
++  const refreshQr = useCallback(async () => {
++    stopPoll();
++    setBusy("qr");
++    try {
++      const t = await api.baiduQrBegin();
++      setQr(t);
++      setBusy(""); 
++      const startedAt = Date.now();
++
++      const tick = () => {
++        pollRef.current = window.setTimeout(async () => {
++          try {
++            const st = await api.baiduQrPoll(t.sign);
++            if (st.state === "scanned") {
++              setBusy("scanned");
++            } else if (st.state === "done") {
++              stopPoll();
++              setQr(null);
++              setBusy("");
++              toast(`已连接百度网盘${st.user ? `：${st.user}` : ""}`, "success");
++              await loadStatus();
++              await loadRoots();
++              await loadDir("/");
++              return;
++            } else if (st.state === "expired") {
++              stopPoll();
++              setQr(null);
++              setBusy("");
++              toast("二维码已过期，请重新获取", "error");
++              return;
++            }
++            // 二维码大约 2 分钟内有效
++            if (Date.now() - startedAt > 115_000) {
++              stopPoll();
++              setQr(null);
++              setBusy("");
++              toast("二维码已过期，请重新获取", "error");
++              return;
++            }
++            tick();
++          } catch (e) {
++            stopPoll();
++            setQr(null);
++            setBusy("");
++            toast(String(e), "error");
++          }
++        }, 400);
++      };
++      tick();
++    } catch (e) {
++      setBusy("");
++      toast(String(e), "error");
++    }
++  }, [loadDir, loadRoots, loadStatus, stopPoll, toast]);
++
++  const cancelQr = () => {
++    stopPoll();
++    setQr(null);
++    setBusy("");
++  };
++
++  const logout = async () => {
++    try {
++      const s = await api.baiduLogout();
++      setStatus(s);
++      setItems([]);
++      setDir("");
++      setAlbums([]);
++      setRoots([]);
++      setOpenAlbum(null);
++      toast("已退出百度网盘", "success");
++    } catch (e) {
++      toast(String(e), "error");
++    }
++  };
++
++  const importDir = async () => {
++    if (!dir) return;
++    setBusy("import");
++    try {
++      const st = await api.baiduImport(dir);
++      await loadRoots();
++      toast(
++        `导入完成：扫描 ${st.scanned} 个音频，新增 ${st.imported}，跳过 ${st.skipped}`,
++        "success",
++      );
++    } catch (e) {
++      toast(String(e), "error");
++    } finally {
++      setBusy("");
++    }
++  };
++
++  const removeRoot = async (root: string) => {
++    try {
++      const n = await api.baiduRemoveRoot(root);
++      await loadRoots();
++      setOpenAlbum(null);
++      toast(`已移除 ${n} 首`, "success");
++    } catch (e) {
++      toast(String(e), "error");
++    }
++  };
++
++  const play = async (t: {
++    fsId: string;
++    title: string;
++    artist: string;
++    album: string;
++    ext: string;
++  }) => {
++    setPlayingId(t.fsId);
++    try {
++      await api.baiduPlay({ ...t, durationMs: 0 });
++    } catch (e) {
++      toast(String(e), "error");
++    } finally {
++      setPlayingId(null);
++    }
++  };
++
++  const preview = async (f: BdItem) => {
++    setPlayingId(f.fsId);
++    try {
++      await api.baiduPreview(f.fsId, f.path);
++    } catch (e) {
++      toast(String(e), "error");
++    } finally {
++      setPlayingId(null);
++    }
++  };
++
++  const openOne = async (a: BdAlbum) => {
++    setBusy("album");
++    try {
++      const tracks = await api.baiduAlbumTracks(a.album);
++      setOpenAlbum({ album: a.album, tracks });
++    } catch (e) {
++      toast(String(e), "error");
++    } finally {
++      setBusy("");
++    }
++  };
++
++  /* ── 未登录：扫码卡片 ─────────────────────────────────────── */
++  if (!authorized) {
++    return (
++      <div className="h-full flex items-center justify-center py-6">
++        <div
++          className="w-full max-w-[560px] rounded-2xl p-6"
++          style={{ background: "var(--shade)", border: "1px solid var(--line)" }}
++        >
++          <div className="flex items-center gap-2 mb-1.5">
++            <Cloud size={16} className="text-[var(--accent-strong)]" />
++            <span className="text-[14px] text-[var(--ink)] font-medium">
++              用自己的百度网盘当音乐库
++            </span>
++          </div>
++
++          {!qr ? (
++            <>
++              <p className="text-[12.5px] text-[var(--ink-2)] leading-relaxed mb-4">
++                扫码登录后，可以把网盘里的任意文件夹（例如
++                <code className="text-[var(--ink)]"> /我的资源/音乐/V家专辑/专辑名 </code>
++                ）整棵树导入成本地专辑，之后按专辑播放、进队列、看歌词都和本地音乐一样。
++              </p>
++              <ol className="text-[12.5px] text-[var(--ink-2)] leading-relaxed mb-5 space-y-1.5">
++                <li className="flex gap-2">
++                  <span className="text-[var(--ink-3)] tabular-nums">1.</span>
++                  点「扫码登录」，下面会直接显示二维码（不用跳浏览器）。
++                </li>
++                <li className="flex gap-2">
++                  <span className="text-[var(--ink-3)] tabular-nums">2.</span>
++                  用手机百度 App 扫一下，并在手机上确认登录。
++                </li>
++                <li className="flex gap-2">
++                  <span className="text-[var(--ink-3)] tabular-nums">3.</span>
++                  回到这里进入「我的资源 / 音乐 / …」，点「导入该文件夹」。
++                </li>
++              </ol>
++              <div className="flex items-center gap-2">
++                <button
++                  className="btn-primary h-9 px-4 text-[12.5px] flex items-center gap-1.5"
++                  disabled={busy === "qr"}
++                  onClick={() => void refreshQr()}
++                >
++                  {busy === "qr" ? (
++                    <Loader2 size={14} className="animate-spin" />
++                  ) : (
++                    <QrCode size={14} />
++                  )}
++                  扫码登录
++                </button>
++                <span className="flex items-center gap-1 text-[11.5px] text-[var(--ink-3)] ml-auto">
++                  <ShieldCheck size={12} />
++                  登录态只存在本机，不上传
++                </span>
++              </div>
++            </>
++          ) : (
++            <div className="flex gap-5 items-center">
++              <div
++                className="shrink-0 rounded-xl p-2 bg-white"
++                style={{ border: "1px solid var(--line)" }}
++              >
++                <img
++                  src={qr.image}
++                  alt="百度登录二维码"
++                  width={150}
++                  height={150}
++                  style={{ display: "block", width: 150, height: 150 }}
++                />
++              </div>
++              <div className="min-w-0">
++                <div className="text-[12.5px] text-[var(--ink)] mb-1">
++                  {busy === "scanned" ? "已扫码，请在手机上确认" : "请用手机百度 App 扫码"}
++                </div>
++                <div className="text-[11.5px] text-[var(--ink-3)] leading-relaxed mb-3">
++                  打开百度 App → 右上角「+」→ 扫一扫。
++                  <br />
++                  登录态只保存在本机，可随时退出。
++                </div>
++                <div className="flex items-center gap-2">
++                  <button
++                    className="btn-secondary h-8 px-3 text-[12px] flex items-center gap-1.5"
++                    onClick={() => void refreshQr()}
++                    disabled={busy === "qr"}
++                  >
++                    <RefreshCw size={12} className={busy === "qr" ? "animate-spin" : ""} />
++                    换个二维码
++                  </button>
++                  <button className="btn-secondary h-8 px-3 text-[12px]" onClick={cancelQr}>
++                    取消
++                  </button>
++                </div>
++              </div>
++            </div>
++          )}
++        </div>
++      </div>
++    );
++  }
++
++  /* ── 已登录：目录浏览 + 已导入 ─────────────────────────────── */
++  const trail = crumbs(dir);
++
++  return (
++    <div className="h-full flex flex-col min-h-0">
++      {/* 工具条：面包屑 + 账号 + 操作 */}
++      <div className="flex items-center gap-2 py-2 flex-wrap">
++        <div className="flex items-center gap-1 min-w-0 flex-1 text-[12.5px] text-[var(--ink-2)]">
++          {trail.map((c, i) => (
++            <span key={c.path} className="flex items-center gap-1 min-w-0">
++              {i > 0 && <ChevronRight size={12} className="text-[var(--ink-3)] shrink-0" />}
++              <button
++                className={`truncate hover:text-[var(--ink)] transition-colors ${
++                  i === trail.length - 1 ? "text-[var(--ink)] font-medium" : ""
++                }`}
++                onClick={() => loadDir(c.path)}
++              >
++                {c.name}
++              </button>
++            </span>
++          ))}
++        </div>
++
++        <button
++          className="btn-secondary h-8 px-3 text-[12px] shrink-0 flex items-center gap-1.5"
++          disabled={busy === "list"}
++          onClick={() => loadDir(dir)}
++          title="刷新当前目录"
++        >
++          <RefreshCw size={12} className={busy === "list" ? "animate-spin" : ""} />
++          刷新
++        </button>
++        <button
++          className="btn-primary h-8 px-3 text-[12px] shrink-0 flex items-center gap-1.5"
++          disabled={!dir || busy === "import"}
++          style={{ opacity: dir ? 1 : 0.45 }}
++          onClick={importDir}
++          title="递归导入该文件夹（含子目录）里的音频"
++        >
++          {busy === "import" ? (
++            <Loader2 size={12} className="animate-spin" />
++          ) : (
++            <FolderPlus size={12} />
++          )}
++          导入该文件夹
++        </button>
++        {status?.user ? (
++          <span
++            className="h-8 px-2.5 rounded-lg text-[11.5px] text-[var(--ink-2)] flex items-center gap-1.5 shrink-0"
++            style={{ background: "var(--shade)", border: "1px solid var(--line)" }}
++            title="已连接的百度账号"
++          >
++            <User size={12} />
++            {status.user}
++          </span>
++        ) : null}
++        <button
++          className="btn-secondary h-8 px-2.5 text-[12px] shrink-0 flex items-center gap-1.5"
++          onClick={logout}
++          title="退出百度网盘登录"
++        >
++          <LogOut size={12} />
++          退出
++        </button>
++      </div>
++
++      <div className="flex-1 min-h-0 overflow-y-auto">
++        {openAlbum ? (
++          <div className="pb-3">
++            <button
++              className="flex items-center gap-1 text-[12px] text-[var(--ink-2)] hover:text-[var(--ink)] mb-2"
++              onClick={() => setOpenAlbum(null)}
++            >
++              <ArrowLeft size={12} /> 返回专辑列表
++            </button>
++            <div className="text-[13px] text-[var(--ink)] font-medium mb-1.5">
++              {openAlbum.album}
++              <span className="text-[var(--ink-3)] font-normal ml-2">
++                {openAlbum.tracks.length} 首
++              </span>
++            </div>
++            {openAlbum.tracks.map((t) => (
++              <div
++                key={t.fsId}
++                className="group flex items-center gap-2.5 h-10 px-2 rounded-lg hover:bg-[var(--shade)] cursor-default"
++              >
++                <button
++                  className="w-6 h-6 rounded-full flex items-center justify-center text-[var(--ink-2)] hover:text-[var(--ink)]"
++                  onClick={() => play(t)}
++                  title="播放"
++                >
++                  {playingId === t.fsId ? (
++                    <Loader2 size={13} className="animate-spin" />
++                  ) : (
++                    <Play size={13} />
++                  )}
++                </button>
++                <span className="text-[12.5px] text-[var(--ink)] truncate flex-1">{t.title}</span>
++                <span className="text-[11.5px] text-[var(--ink-3)] truncate max-w-[160px]">
++                  {t.artist}
++                </span>
++                <span className="text-[10.5px] text-[var(--ink-3)] uppercase">{t.ext}</span>
++                <span className="text-[11px] text-[var(--ink-3)] tabular-nums w-16 text-right">
++                  {fmtSize(t.size)}
++                </span>
++              </div>
++            ))}
++          </div>
++        ) : (
++          <>
++            {dirs.map((d) => (
++              <div
++                key={d.fsId}
++                className="group flex items-center gap-2.5 h-10 px-2 rounded-lg hover:bg-[var(--shade)] cursor-pointer"
++                onClick={() => loadDir(d.path)}
++              >
++                <FolderClosed size={15} className="text-[var(--accent-strong)] shrink-0" />
++                <span className="text-[12.5px] text-[var(--ink)] truncate flex-1">{d.name}</span>
++                <ChevronRight
++                  size={13}
++                  className="text-[var(--ink-3)] opacity-0 group-hover:opacity-100"
++                />
++              </div>
++            ))}
++
++            {files.map((f) => (
++              <div
++                key={f.fsId}
++                className="group flex items-center gap-2.5 h-10 px-2 rounded-lg hover:bg-[var(--shade)]"
++              >
++                <button
++                  className="w-6 h-6 rounded-full flex items-center justify-center text-[var(--ink-2)] hover:text-[var(--ink)]"
++                  onClick={() => preview(f)}
++                  title="试听"
++                >
++                  {playingId === f.fsId ? (
++                    <Loader2 size={13} className="animate-spin" />
++                  ) : (
++                    <Play size={13} />
++                  )}
++                </button>
++                <Music2 size={13} className="text-[var(--ink-3)] shrink-0" />
++                <span className="text-[12.5px] text-[var(--ink)] truncate flex-1">{f.name}</span>
++                <span className="text-[10.5px] text-[var(--ink-3)] uppercase">{f.ext}</span>
++                <span className="text-[11px] text-[var(--ink-3)] tabular-nums w-16 text-right">
++                  {fmtSize(f.size)}
++                </span>
++              </div>
++            ))}
++
++            {!dirs.length && !files.length && (
++              <div className="h-24 flex items-center justify-center text-[12.5px] text-[var(--ink-3)]">
++                {busy === "list" ? "读取目录…" : "此目录下没有音频，进入子文件夹看看吧"}
++              </div>
++            )}
++
++            {/* 已导入 */}
++            <div className="mt-4 pt-3 border-t border-[var(--line)]">
++              <div className="flex items-center gap-2 mb-2">
++                <span className="text-[12px] text-[var(--ink-2)] font-medium">已导入音乐</span>
++                <span className="text-[11px] text-[var(--ink-3)]">
++                  {albums.reduce((n, a) => n + a.count, 0)} 首 / {albums.length} 张专辑
++                </span>
++              </div>
++
++              {roots.length > 0 && (
++                <div className="flex flex-wrap gap-1.5 mb-2.5">
++                  {roots.map((r) => (
++                    <span
++                      key={r.root}
++                      className="flex items-center gap-1.5 h-6 pl-2 pr-1 rounded-full bg-[var(--shade)] border border-[var(--line)] text-[11px] text-[var(--ink-2)]"
++                      title={r.root}
++                    >
++                      <span className="truncate max-w-[220px]">{r.root}</span>
++                      <span className="text-[var(--ink-3)]">{r.count} 首</span>
++                      <button
++                        className="w-4 h-4 rounded-full flex items-center justify-center hover:bg-[var(--line)] text-[var(--ink-3)]"
++                        onClick={() => removeRoot(r.root)}
++                        title="移除该目录导入的曲目"
++                      >
++                        <Trash2 size={10} />
++                      </button>
++                    </span>
++                  ))}
++                </div>
++              )}
++
++              {albums.length === 0 ? (
++                <div className="text-[12px] text-[var(--ink-3)] py-3">
++                  还没有导入。进入「我的资源/音乐/V家专辑/专辑名」这类目录后点「导入该文件夹」。
++                </div>
++              ) : (
++                <div className="grid grid-cols-2 gap-1">
++                  {albums.map((a) => (
++                    <div
++                      key={`${a.album}-${a.artist}`}
++                      className="flex items-center gap-2.5 h-11 px-2 rounded-lg hover:bg-[var(--shade)] cursor-pointer"
++                      onClick={() => openOne(a)}
++                    >
++                      <div
++                        className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
++                        style={{
++                          background: "rgba(255,255,255,0.04)",
++                          border: "1px solid rgba(255,255,255,0.06)",
++                        }}
++                      >
++                        <AlbumIcon size={14} className="text-[var(--ink-3)]" />
++                      </div>
++                      <div className="min-w-0 flex-1">
++                        <div className="text-[12.5px] text-[var(--ink)] truncate">{a.album}</div>
++                        <div className="text-[11px] text-[var(--ink-3)] truncate">
++                          {a.artist || "未知歌手"} · {a.count} 首
++                        </div>
++                      </div>
++                    </div>
++                  ))}
++                </div>
++              )}
++            </div>
++          </>
++        )}
++      </div>
++    </div>
++  );
++}
 diff --git a/src/views/NavidromePanel.liquid.tsx b/src/views/NavidromePanel.liquid.tsx
 index 9d3fc06..f54a127 100644
 --- a/src/views/NavidromePanel.liquid.tsx
@@ -1320,3 +3594,141 @@ index 5781d48..23535c9 100644
          </div>
        </div>
      </div>
+diff --git a/src/views/SourcesView.liquid.tsx b/src/views/SourcesView.liquid.tsx
+index dd8583e..22e8a8d 100644
+--- a/src/views/SourcesView.liquid.tsx
++++ b/src/views/SourcesView.liquid.tsx
+@@ -23,6 +23,7 @@ import {
+ } from "lucide-react";
+ import { useStore } from "../store";
+ import { api } from "../api";
++import BaiduPanPanel from "./BaiduPanPanel";
+ import NavidromePanel from "./NavidromePanel";
+ import { UpFollowRow } from "./online/BiliFollowRow";
+ import { BiliPlaylistPickerModal } from "./online/BiliPlaylistPickerModal";
+@@ -40,10 +41,11 @@ const ORDERS: { key: "pubdate" | "click" | "stow"; label: string }[] = [
+   { key: "stow", label: "最多收藏" },
+ ];
+ 
+-type SourceTab = "bilibili" | "navidrome" | "other" | "downloads";
++type SourceTab = "bilibili" | "baidu" | "navidrome" | "other" | "downloads";
+ 
+ const TABS: { key: SourceTab; label: string }[] = [
+   { key: "bilibili", label: "Bilibili" },
++  { key: "baidu", label: "百度网盘" },
+   { key: "navidrome", label: "Navidrome" },
+   { key: "other", label: "其它" },
+   { key: "downloads", label: "已下载" },
+@@ -69,6 +71,7 @@ function DownloadsPanel() {
+     kugou: "酷狗",
+     bilibili: "B站",
+     navidrome: "Navidrome",
++    baidu: "百度网盘",
+   };
+   return (
+     <div className="flex-1 min-h-0 flex flex-col overflow-hidden anim-fade">
+@@ -880,7 +883,12 @@ export default function SourcesView() {
+         <div className={tab === "navidrome" ? "h-full" : "hidden"}>
+           <NavidromePanel />
+         </div>
++        {/* 百度网盘：同样常驻挂载，切换 Tab 不丢目录浏览状态 */}
++        <div className={tab === "baidu" ? "h-full" : "hidden"}>
++          <BaiduPanPanel />
++        </div>
+         {tab !== "navidrome" &&
++          tab !== "baidu" &&
+           tab !== "downloads" &&
+           (!result || !tabResult ? (
+           <div className="h-full flex flex-col items-center justify-center gap-3 text-[var(--ink-3)]">
+diff --git a/src/views/SourcesView.skeuo.tsx b/src/views/SourcesView.skeuo.tsx
+index 28b8a7d..f4749b4 100644
+--- a/src/views/SourcesView.skeuo.tsx
++++ b/src/views/SourcesView.skeuo.tsx
+@@ -23,6 +23,7 @@ import {
+ } from "lucide-react";
+ import { useStore } from "../store";
+ import { api } from "../api";
++import BaiduPanPanel from "./BaiduPanPanel";
+ import NavidromePanel from "./NavidromePanel";
+ import { UpFollowRow } from "./online/BiliFollowRow";
+ import { BiliPlaylistPickerModal } from "./online/BiliPlaylistPickerModal";
+@@ -40,10 +41,11 @@ const ORDERS: { key: "pubdate" | "click" | "stow"; label: string }[] = [
+   { key: "stow", label: "最多收藏" },
+ ];
+ 
+-type SourceTab = "bilibili" | "navidrome" | "other" | "downloads";
++type SourceTab = "bilibili" | "baidu" | "navidrome" | "other" | "downloads";
+ 
+ const TABS: { key: SourceTab; label: string }[] = [
+   { key: "bilibili", label: "Bilibili" },
++  { key: "baidu", label: "百度网盘" },
+   { key: "navidrome", label: "Navidrome" },
+   { key: "other", label: "其它" },
+   { key: "downloads", label: "已下载" },
+@@ -69,6 +71,7 @@ function DownloadsPanel() {
+     kugou: "酷狗",
+     bilibili: "B站",
+     navidrome: "Navidrome",
++    baidu: "百度网盘",
+   };
+   return (
+     <div className="glass rounded-3xl flex-1 min-h-0 flex flex-col overflow-hidden anim-fade">
+@@ -876,7 +879,12 @@ export default function SourcesView() {
+         <div className={tab === "navidrome" ? "h-full" : "hidden"}>
+           <NavidromePanel />
+         </div>
++        {/* 百度网盘：同样常驻挂载，切换 Tab 不丢目录浏览状态 */}
++        <div className={tab === "baidu" ? "h-full" : "hidden"}>
++          <BaiduPanPanel />
++        </div>
+         {tab !== "navidrome" &&
++          tab !== "baidu" &&
+           tab !== "downloads" &&
+           (!result || !tabResult ? (
+           <div className="h-full flex flex-col items-center justify-center gap-3 text-[var(--ink-3)]">
+diff --git a/src/views/SourcesView.standard.tsx b/src/views/SourcesView.standard.tsx
+index 28b8a7d..f4749b4 100644
+--- a/src/views/SourcesView.standard.tsx
++++ b/src/views/SourcesView.standard.tsx
+@@ -23,6 +23,7 @@ import {
+ } from "lucide-react";
+ import { useStore } from "../store";
+ import { api } from "../api";
++import BaiduPanPanel from "./BaiduPanPanel";
+ import NavidromePanel from "./NavidromePanel";
+ import { UpFollowRow } from "./online/BiliFollowRow";
+ import { BiliPlaylistPickerModal } from "./online/BiliPlaylistPickerModal";
+@@ -40,10 +41,11 @@ const ORDERS: { key: "pubdate" | "click" | "stow"; label: string }[] = [
+   { key: "stow", label: "最多收藏" },
+ ];
+ 
+-type SourceTab = "bilibili" | "navidrome" | "other" | "downloads";
++type SourceTab = "bilibili" | "baidu" | "navidrome" | "other" | "downloads";
+ 
+ const TABS: { key: SourceTab; label: string }[] = [
+   { key: "bilibili", label: "Bilibili" },
++  { key: "baidu", label: "百度网盘" },
+   { key: "navidrome", label: "Navidrome" },
+   { key: "other", label: "其它" },
+   { key: "downloads", label: "已下载" },
+@@ -69,6 +71,7 @@ function DownloadsPanel() {
+     kugou: "酷狗",
+     bilibili: "B站",
+     navidrome: "Navidrome",
++    baidu: "百度网盘",
+   };
+   return (
+     <div className="glass rounded-3xl flex-1 min-h-0 flex flex-col overflow-hidden anim-fade">
+@@ -876,7 +879,12 @@ export default function SourcesView() {
+         <div className={tab === "navidrome" ? "h-full" : "hidden"}>
+           <NavidromePanel />
+         </div>
++        {/* 百度网盘：同样常驻挂载，切换 Tab 不丢目录浏览状态 */}
++        <div className={tab === "baidu" ? "h-full" : "hidden"}>
++          <BaiduPanPanel />
++        </div>
+         {tab !== "navidrome" &&
++          tab !== "baidu" &&
+           tab !== "downloads" &&
+           (!result || !tabResult ? (
+           <div className="h-full flex flex-col items-center justify-center gap-3 text-[var(--ink-3)]">
