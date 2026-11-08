@@ -143,12 +143,12 @@ impl Engine {
         let _ = std::fs::create_dir_all(&downloads_dir);
         // 旧版缓存按 URL 哈希命名（无稳定前缀），链接签名变化导致
         // 这些文件永不再命中，启动时清掉以免白占磁盘。
-        // 白名单必须覆盖全部缓存键前缀（net/qq/kug/bili/nd/url，见 cache_key_for），
+        // 白名单必须覆盖全部缓存键前缀（net/qq/kug/bili/nd/bd/url，见 cache_key_for），
         // 漏掉的前缀会被误当旧文件删光——该音源缓存将永远活不过一次重启
         if let Ok(rd) = std::fs::read_dir(&downloads_dir) {
             for e in rd.flatten() {
                 let name = e.file_name().to_string_lossy().into_owned();
-                let recognized = ["net-", "qq-", "kug-", "bili-", "nd-", "url-"]
+                let recognized = ["net-", "qq-", "kug-", "bili-", "nd-", "bd-", "url-"]
                     .iter()
                     .any(|p| name.starts_with(p));
                 if !recognized {

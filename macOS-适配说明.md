@@ -1,4 +1,4 @@
-# RustMusic macOS 版（0.7.1，Apple Silicon）
+# RustMusic macOS 版（0.7.2，Apple Silicon）
 
 上游项目：[LingyunStudio/RustMusic](https://github.com/LingyunStudio/RustMusic)（Tauri 2 + React + Rust，官方只发 Windows / Linux）。
 本仓库是在上游 **v0.7.1**（`3a7a452`）之上打的 macOS 适配分支，已在本机（macOS 26 / Apple Silicon / arm64）实测通过。
@@ -7,19 +7,40 @@
 
 | 文件 | 说明 |
 | --- | --- |
-| `RustMusic_0.7.1_aarch64.dmg` | 安装镜像，双击后把 RustMusic 拖进 Applications（7.2 MB） |
+| `RustMusic_0.7.2_aarch64.dmg` | 安装镜像，双击后把 RustMusic 拖进 Applications（7.3 MB） |
 | `RustMusic.app` | 已 ad-hoc 签名的应用本体，可直接拖进 /Applications |
 | `rustmusic-macos-port.patch` | 相对上游 v0.7.1 的全部改动（`git diff`，含新增文件） |
 
-SHA-256（dmg）：`09f4a35256b20400aadacb13b7857bb060929adb2efe3ad1ac8e6f2e24f0e381`
+SHA-256（dmg）：`4f9695afb99c112b75e797ee6da77f83cedfb82f8c6bc35b253494cd49a7910a`
 
 ## 安装 / 首次运行
 
-1. 打开 `RustMusic_0.7.1_aarch64.dmg`，把 RustMusic 拖到 Applications。
+1. 打开 `RustMusic_0.7.2_aarch64.dmg`，把 RustMusic 拖到 Applications。
 2. 首次启动若提示「无法打开，因为无法验证开发者」：右键点图标 → 打开 → 再点「打开」；或执行
    `xattr -dr com.apple.quarantine /Applications/RustMusic.app`。
    （构建是 ad-hoc 签名、未走苹果公证，这是分发方式决定的，不是包坏了。）
 3. 首次使用会正常启动，**不会**弹钥匙串密码框（见下方「凭据存储」）。
+
+## 0.7.2 新增：百度网盘作为原生音源
+
+「在线音源」里多了一个 **百度网盘** 标签页，与 Bilibili / Navidrome 并列：
+
+1. **扫码登录**（不用 AppKey）：面板里直接显示百度登录二维码，手机百度 App 扫码确认即可。
+2. **目录浏览**：面包屑进目录，文件夹可逐层进入，音频文件可直接试听。
+3. **整棵文件夹导入**：在专辑目录点「导入该文件夹」，递归扫描其中的音频（mp3 / flac / wav / ogg / m4a …），
+   按「上一级目录 = 专辑、文件夹名/`歌手 - 歌名` 文件名 = 歌手与曲名」写进本地库，之后按专辑播放、进队列、看歌词，和本地音乐一致。
+4. **边下边播**：播放时按 `bd-<fs_id>-<音质>` 缓存到应用数据目录，下载进度够起播就开始播，二次播放直接命中缓存。
+
+实现要点（换实现时别踩的坑）：
+
+- 登录态走 cookie 会话：`passport.baidu.com/v2/api/getqrcode` 取二维码 → `channel/unicast` 长轮询（`channel_v` 的 `status`/`v`）
+  → **`/v3/login/main/qrbdusslogin?v=<ms>&bduss=<channel_v.v>&loginVersion=v4&qrcode=1&tpl=netdisk`** 才是登录页真正用的换取接口
+  （老的 `/v2/api/bdussign` 现在会 302 到 error.html）。BDUSS/STOKEN 落到本机凭据文件，bdstoken 存 settings。
+- 目录列表用网页接口 `pan.baidu.com/api/list?...&dir=…&bdstoken=…`（没有 recursion，逐层 BFS）。
+- 直链用 `pan.baidu.com/api/filemetas?target=["<路径>"]&dlink=1&web=5&app_id=250528`；
+  下载 dlink **必须**带 `User-Agent: pan.baidu.com` 且带 `Cookie: BDUSS=…; STOKEN=…`，否则 403。
+- 昵称用 `rest/2.0/xpan/nas?method=uinfo`（网页的 `gettemplatevariable` 在 cookie 会话下返回 errno -6）。
+- 应用启动时会清理 downloads 目录里的旧缓存，白名单必须包含 `bd-` 前缀，否则网盘缓存活不过一次重启。
 
 ## 0.7.1 相比 0.6.0 的上游变化（本版已一并适配）
 
@@ -91,7 +112,7 @@ OGG(Vorbis) 容器也能正常解码播放（`AUDIO_EXTS` 里一直列着 wav / 
 
 ## 本机验证结果（macOS 26 / Apple Silicon）
 
-- 构建：`npm run tauri build` → `RustMusic.app` + `RustMusic_0.7.1_aarch64.dmg`（7.2 MB）✅
+- 构建：`npm run tauri build` → `RustMusic.app` + `RustMusic_0.7.2_aarch64.dmg`（7.3 MB）✅
 - 启动：/Applications 中启动正常，无钥匙串弹窗，资料库空态干净 ✅
 - 外壳：原生红绿灯 + 中文菜单栏「RustMusic 文件 编辑 显示 窗口」，三套主题（标准 / 拟物 / 液态玻璃）下
   侧栏品牌区都不压红绿灯 ✅
@@ -102,6 +123,8 @@ OGG(Vorbis) 容器也能正常解码播放（`AUDIO_EXTS` 里一直列着 wav / 
 - 系统媒体控制：控制中心「正在播放」显示曲目 / 应用图标，可播放暂停 ✅
 - 关闭窗口 → 隐藏（进程存活）；点 Dock 图标 / `open -a` → `RunEvent::Reopen` 恢复窗口 ✅
 - 设置页：最小化到菜单栏、macOS 更新说明、在访达中显示、输出设备「跟随系统默认（MacBook Air 扬声器）」✅
+- 百度网盘：扫码登录成功（昵称自动显示）→ 浏览 `/我的资源/音乐songs/V家专辑` → 进入专辑 → 「导入该文件夹」
+  导入 8 首 wav → 播放正常（边下边播，位置 0:09 / 4:36，缓存 `bd-<fs_id>-wav` 落盘）✅
 
 ## 已知限制
 
@@ -112,6 +135,8 @@ OGG(Vorbis) 容器也能正常解码播放（`AUDIO_EXTS` 里一直列着 wav / 
 - **自动更新需手动安装**：点「立即更新」只跳 GitHub 发布页，需自己下 dmg 覆盖（与 Linux 版一致）。
 - **WASAPI 独占 / 任务栏歌词**：Windows 专属，macOS 上相关设置项不显示。
 - 仅提供 **arm64（Apple Silicon）** 构建，未提供 Intel / Universal 包。
+- **百度网盘音源的限制**：登录态失效后需重新扫码（目前只提示失效，不会自动续期）；网盘接口是百度网页版在用的私有接口，
+  百度改动后可能失效；会员专属 / 无权限的文件取不到直链会给出提示；导入是按目录元数据写库，不预先下载音频。
 
 ## 重新构建
 

@@ -343,6 +343,33 @@ export const api = {
       durationMs: number;
     }
   ) => invoke<void>("navidrome_play", { server, username, track }),
+  /* ── 百度网盘音源 ── */
+  baiduStatus: () => invoke<import("./types").BaiduStatus>("baidu_status"),
+  baiduQrBegin: () => invoke<import("./types").BaiduQrTicket>("baidu_qr_begin"),
+  baiduQrPoll: (sign: string) =>
+    invoke<import("./types").BaiduQrState>("baidu_qr_poll", { sign }),
+  baiduLogout: () => invoke<import("./types").BaiduStatus>("baidu_logout"),
+  baiduList: (dir: string) =>
+    invoke<import("./types").BdItem[]>("baidu_list", { dir }),
+  baiduImport: (dir: string) =>
+    invoke<import("./types").BaiduImportStat>("baidu_import", { dir }),
+  baiduRoots: () => invoke<import("./types").BaiduRootInfo[]>("baidu_roots"),
+  baiduRemoveRoot: (root: string) => invoke<number>("baidu_remove_root", { root }),
+  baiduAlbums: () => invoke<import("./types").BdAlbum[]>("baidu_albums"),
+  baiduAlbumTracks: (album: string) =>
+    invoke<import("./types").BdTrack[]>("baidu_album_tracks", { album }),
+  baiduAllTracks: () => invoke<import("./types").BdTrack[]>("baidu_all_tracks"),
+  baiduPlay: (track: {
+    fsId: string;
+    title: string;
+    artist: string;
+    album: string;
+    ext: string;
+    durationMs: number;
+  }) => invoke<void>("baidu_play", { track }),
+  baiduPreview: (fsId: string, path: string) =>
+    invoke<void>("baidu_preview", { fsId, path }),
+
   navidromeForget: (server: string, username: string) =>
     invoke<void>("navidrome_forget", { server, username }),
   navidromeLyric: (id: string) =>

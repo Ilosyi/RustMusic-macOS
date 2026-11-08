@@ -62,6 +62,9 @@ impl Engine {
             // Navidrome：qid 为歌曲 id（流地址里的 salt/token 每次都变，
             // 不能按 URL 哈希，否则永远不命中缓存）
             ("navidrome", _, Some(qid), _) => format!("nd-{qid}-{q}"),
+            // 百度网盘：qid 为 fs_id（dlink 是限时签名地址，每次播放都变，
+            // 同样不能按 URL 哈希，否则重复下载同一首歌）
+            ("baidu", _, Some(qid), _) => format!("bd-{qid}-{q}"),
             // 自定义在线音源没有稳定 ID，仍按 URL 哈希
             _ => {
                 use std::hash::{Hash, Hasher};
@@ -115,7 +118,7 @@ impl Engine {
         }
         // B 站 CDN 直链必须带 Referer/UA（部分边缘节点裸请求 403）；
         // 且 playurl 每次可能返回不同 CDN 主机，不能按主机名判断，按来源标记
-        let is_bili = info.kind == "bilibili";
+        let src_kind = info.kind.clone();
         let engine = Arc::clone(self);
         let app = self.app.clone();
 
@@ -181,7 +184,7 @@ impl Engine {
         }
 
         std::thread::spawn(move || {
-            let result = download_to(&app, &url, &cache, is_bili, Some(&shared));
+            let result = download_to(&app, &url, &cache, &src_kind, Some(&shared));
             engine.downloading.write().remove(&key);
             match result {
                 Err(e) => {
@@ -350,10 +353,10 @@ fn download_to(
     app: &AppHandle,
     url: &str,
     dest: &Path,
-    with_bili_headers: bool,
+    src_kind: &str,
     stream: Option<&Arc<crate::streaming::StreamingDownload>>,
 ) -> Result<(), String> {
-    let r = download_inner(app, url, dest, with_bili_headers, stream);
+    let r = download_inner(app, url, dest, src_kind, stream);
     if let Some(s) = stream {
         // 保证失败时读取端也能立即终止（成功路径已在 inner 内 finish）
         if r.is_err() {
@@ -367,7 +370,7 @@ fn download_inner(
     app: &AppHandle,
     url: &str,
     dest: &Path,
-    with_bili_headers: bool,
+    src_kind: &str,
     stream: Option<&Arc<crate::streaming::StreamingDownload>>,
 ) -> Result<(), String> {
     let part = dest.with_extension("part");
@@ -378,10 +381,16 @@ fn download_inner(
         .build();
     let mut req = agent.get(url);
     // B 站 CDN 直链必须带 Referer 与浏览器 UA，否则部分边缘节点裸请求 403
-    if with_bili_headers {
+    if src_kind == "bilibili" {
         req = req
             .set("Referer", "https://www.bilibili.com/")
             .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36");
+    } else if src_kind == "baidu" {
+        // 百度网盘 dlink 除了强制 UA，还要带登录 cookie，否则 403
+        req = req.set("User-Agent", crate::baidupan::DOWNLOAD_UA);
+        if let Some(cookie) = crate::baidupan::download_cookie() {
+            req = req.set("Cookie", &cookie);
+        }
     }
     // 连接建立传输级重试（issue#8-2：网络/代理切换后死连接自愈）。
     // 仅重试"拿到响应头之前"的失败——此刻尚未向流式读取端发布过字节，

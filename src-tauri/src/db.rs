@@ -87,6 +87,21 @@ CREATE TABLE IF NOT EXISTS online_tracks (
   play_count INTEGER NOT NULL DEFAULT 0,
   UNIQUE(kind, rid)
 );
+-- 百度网盘导入的音乐文件：网盘没有曲库检索接口，只能按文件夹导入后本地索引
+-- （fs_id 是网盘内的稳定文件标识，路径/歌名会随用户整理变化，故以它为键）
+CREATE TABLE IF NOT EXISTS baidu_tracks (
+  fs_id TEXT PRIMARY KEY,
+  root TEXT NOT NULL DEFAULT '',
+  path TEXT NOT NULL DEFAULT '',
+  album TEXT NOT NULL DEFAULT '',
+  artist TEXT NOT NULL DEFAULT '',
+  title TEXT NOT NULL DEFAULT '',
+  ext TEXT NOT NULL DEFAULT '',
+  size INTEGER NOT NULL DEFAULT 0,
+  mtime INTEGER NOT NULL DEFAULT 0,
+  imported_at INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_baidu_album ON baidu_tracks(album, title);
 CREATE TABLE IF NOT EXISTS liked_online (
   rowid INTEGER PRIMARY KEY AUTOINCREMENT,
   kind TEXT NOT NULL,
@@ -1725,3 +1740,14 @@ mod migration_tests {
         assert!(miss.is_none());
     }
 }
+
+/// 取某首网盘曲目的绝对路径（导入时记录）
+pub fn baidu_path_of(conn: &Connection, fs_id: &str) -> Option<String> {
+    conn.query_row(
+        "select path from baidu_tracks where fs_id = ?1",
+        rusqlite::params![fs_id],
+        |r| r.get::<_, String>(0),
+    )
+    .ok()
+}
+

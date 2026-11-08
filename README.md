@@ -10,13 +10,15 @@
 
 > ### 🍎 macOS 版（Apple Silicon）
 >
-> 本仓库是 [LingyunStudio/RustMusic](https://github.com/LingyunStudio/RustMusic) **v0.7.1** 的 macOS 适配分支，已补丁并在 macOS 26 / Apple Silicon 上实测通过。
+> 本仓库是 [LingyunStudio/RustMusic](https://github.com/LingyunStudio/RustMusic) **v0.7.1** 的 macOS 适配分支，已补丁并在 macOS 26 / Apple Silicon 上实测通过；并额外加入了 **百度网盘音源（扫码登录）**。
 >
-> **[⬇️ 下载 RustMusic_0.7.1_aarch64.dmg](https://github.com/Ilosyi/RustMusic-macOS/releases/latest)**
+> **[⬇️ 下载最新 macOS dmg](https://github.com/Ilosyi/RustMusic-macOS/releases/latest)**
 >
 > 首次打开若提示「无法验证开发者」：右键点 App → 打开；或执行 `xattr -dr com.apple.quarantine /Applications/RustMusic.app`（ad-hoc 签名、未做苹果公证）。
 >
 > macOS 适配内容包括：系统原生 Overlay 标题栏（红绿灯）与三套界面体系自适应、中文化应用菜单栏（修复 ⌘C/⌘V/⌘Q 失效）、点 Dock 图标恢复隐藏窗口、菜单栏模板图标、透明桌面歌词浮窗、迷你小窗、系统媒体控制（控制中心 / 键盘媒体键），凭据改为本机文件存储（避免每次升级都弹钥匙串密码框），以及 OGG 解码补全。
+>
+> 另含原创功能：**百度网盘作为原生音源**——在「在线音源」里扫码登录，浏览网盘目录、整棵文件夹导入成专辑，边下边播（缓存可复用）。
 > 详见 [macOS-适配说明.md](macOS-适配说明.md)。
 
 ## ✨ 功能特性

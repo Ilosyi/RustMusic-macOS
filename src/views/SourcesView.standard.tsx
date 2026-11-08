@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { useStore } from "../store";
 import { api } from "../api";
+import BaiduPanPanel from "./BaiduPanPanel";
 import NavidromePanel from "./NavidromePanel";
 import { UpFollowRow } from "./online/BiliFollowRow";
 import { BiliPlaylistPickerModal } from "./online/BiliPlaylistPickerModal";
@@ -40,10 +41,11 @@ const ORDERS: { key: "pubdate" | "click" | "stow"; label: string }[] = [
   { key: "stow", label: "最多收藏" },
 ];
 
-type SourceTab = "bilibili" | "navidrome" | "other" | "downloads";
+type SourceTab = "bilibili" | "baidu" | "navidrome" | "other" | "downloads";
 
 const TABS: { key: SourceTab; label: string }[] = [
   { key: "bilibili", label: "Bilibili" },
+  { key: "baidu", label: "百度网盘" },
   { key: "navidrome", label: "Navidrome" },
   { key: "other", label: "其它" },
   { key: "downloads", label: "已下载" },
@@ -69,6 +71,7 @@ function DownloadsPanel() {
     kugou: "酷狗",
     bilibili: "B站",
     navidrome: "Navidrome",
+    baidu: "百度网盘",
   };
   return (
     <div className="glass rounded-3xl flex-1 min-h-0 flex flex-col overflow-hidden anim-fade">
@@ -876,7 +879,12 @@ export default function SourcesView() {
         <div className={tab === "navidrome" ? "h-full" : "hidden"}>
           <NavidromePanel />
         </div>
+        {/* 百度网盘：同样常驻挂载，切换 Tab 不丢目录浏览状态 */}
+        <div className={tab === "baidu" ? "h-full" : "hidden"}>
+          <BaiduPanPanel />
+        </div>
         {tab !== "navidrome" &&
+          tab !== "baidu" &&
           tab !== "downloads" &&
           (!result || !tabResult ? (
           <div className="h-full flex flex-col items-center justify-center gap-3 text-[var(--ink-3)]">

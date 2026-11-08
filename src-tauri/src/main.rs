@@ -1,5 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod baidupan;
 mod bilibili;
 mod commands;
 mod credentials;
@@ -392,6 +393,20 @@ fn main() {
             commands::navidrome_all_songs,
             commands::navidrome_play,
             commands::navidrome_lyric,
+            commands::baidu_status,
+            commands::baidu_qr_begin,
+            commands::baidu_qr_poll,
+            commands::baidu_logout,
+            commands::baidu_list,
+            commands::baidu_import,
+            commands::baidu_roots,
+            commands::baidu_remove_root,
+            commands::baidu_albums,
+            commands::baidu_album_tracks,
+            commands::baidu_all_tracks,
+            commands::baidu_play,
+            commands::baidu_preview,
+
             commands::kugou_search,
             commands::kugou_play,
             commands::kugou_lyric,

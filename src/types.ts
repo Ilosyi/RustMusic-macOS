@@ -306,7 +306,82 @@ export interface CurrentTrack extends TrackInfo {
 
 export type RepeatMode = "off" | "all" | "one";
 
-export type QueueItemKind = "track" | "url" | "netease" | "qq" | "kugou" | "bilibili" | "navidrome";
+/* ── 百度网盘音源 ─────────────────────────────────────────── */
+
+export interface BaiduStatus {
+  /** 预留字段（扫码登录不需要用户配置应用） */
+  configured: boolean;
+  /** 是否持有可用的 BDUSS 会话 */
+  authorized: boolean;
+  /** 网盘昵称（登录后才有） */
+  user: string;
+}
+
+/** 登录二维码（image 是 data:image/png;base64,…） */
+export interface BaiduQrTicket {
+  sign: string;
+  image: string;
+  prompt: string;
+}
+
+/** 扫码状态：waiting | scanned | done | expired */
+export interface BaiduQrState {
+  state: "waiting" | "scanned" | "done" | "expired";
+  user: string;
+}
+
+/** 网盘目录项（浏览用） */
+export interface BdItem {
+  fsId: string;
+  name: string;
+  path: string;
+  isDir: boolean;
+  size: number;
+  mtime: number;
+  ext: string;
+}
+
+/** 已导入的曲目 */
+export interface BdTrack {
+  fsId: string;
+  title: string;
+  artist: string;
+  album: string;
+  ext: string;
+  size: number;
+  path: string;
+}
+
+export interface BdAlbum {
+  album: string;
+  artist: string;
+  count: number;
+  size: number;
+}
+
+/** 已导入的根目录 */
+export interface BaiduRootInfo {
+  root: string;
+  count: number;
+  size: number;
+}
+
+export interface BaiduImportStat {
+  root: string;
+  scanned: number;
+  imported: number;
+  skipped: number;
+}
+
+export type QueueItemKind =
+  | "track"
+  | "url"
+  | "netease"
+  | "qq"
+  | "kugou"
+  | "bilibili"
+  | "navidrome"
+  | "baidu";
 
 export type QueueItem =
   | { kind: "track" | "netease" | "url"; id: number }

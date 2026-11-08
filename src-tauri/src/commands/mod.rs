@@ -1,6 +1,7 @@
 //! 命令层：按业务域拆分为子模块，对外仍以 `commands::命令名` 统一暴露
 //! （pub use 再导出，main.rs 的 generate_handler! 注册路径保持不变）。
 mod app;
+mod baidupan;
 mod bilibili;
 mod download;
 mod kugou;
@@ -16,6 +17,7 @@ mod sources;
 mod updater;
 
 pub use app::*;
+pub use baidupan::*;
 pub use bilibili::*;
 pub use download::*;
 pub use kugou::*;

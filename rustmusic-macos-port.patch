@@ -1,5 +1,79 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+deleted file mode 100644
+index a9845bc..0000000
+--- a/.github/workflows/ci.yml
++++ /dev/null
+@@ -1,68 +0,0 @@
+-name: CI
+-
+-on:
+-  push:
+-    branches: [main]
+-  pull_request:
+-
+-jobs:
+-  check:
+-    runs-on: windows-latest
+-    steps:
+-      - uses: actions/checkout@v4
+-
+-      - uses: actions/setup-node@v4
+-        with:
+-          node-version: 20
+-          cache: npm
+-
+-      - uses: dtolnay/rust-toolchain@stable
+-
+-      - uses: Swatinem/rust-cache@v2
+-        with:
+-          workspaces: src-tauri
+-
+-      # 先构建前端（tauri 上下文引用 dist），再跑 Rust 单测
+-      - name: 前端类型检查 + 构建
+-        run: |
+-          npm ci
+-          npm run build
+-
+-      - name: Rust 单元测试
+-        working-directory: src-tauri
+-        # --locked：Cargo.toml 与 Cargo.lock 不同步时直接失败，
+-        # 版本变更必须经由显式 cargo update 评审，杜绝 CI 顺手升级
+-        run: cargo test --bin rustmusic --locked
+-
+-  check-linux:
+-    runs-on: ubuntu-latest
+-    steps:
+-      - uses: actions/checkout@v4
+-
+-      - uses: actions/setup-node@v4
+-        with:
+-          node-version: 20
+-          cache: npm
+-
+-      - uses: dtolnay/rust-toolchain@stable
+-
+-      - uses: Swatinem/rust-cache@v2
+-        with:
+-          workspaces: src-tauri
+-
+-      # Tauri Linux 构建依赖（WebKitGTK 4.1 / GTK3 / 托盘 / 图标）
+-      - name: 安装系统依赖
+-        run: |
+-          sudo apt-get update
+-          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev \
+-            libayatana-appindicator3-dev librsvg2-dev libxdo-dev libdbus-1-dev \
+-            libasound2-dev
+-
+-      - name: 前端类型检查 + 构建
+-        run: |
+-          npm ci
+-          npm run build
+-
+-      - name: Rust 单元测试
+-        working-directory: src-tauri
+-        run: cargo test --bin rustmusic --locked
 diff --git a/README.md b/README.md
-index 9b58588..a0ba45c 100644
+index 9b58588..4279b69 100644
 --- a/README.md
 +++ b/README.md
 @@ -2,12 +2,23 @@
@@ -27,7 +101,15 @@ index 9b58588..a0ba45c 100644
  ## ✨ 功能特性
  
  ### 播放引擎（纯 Rust）
-@@ -114,7 +125,7 @@
+@@ -65,7 +76,6 @@
+ ```
+ ├── index.html               # 主窗口入口
+ ├── desktop-lyrics.html      # 桌面歌词窗口入口（Vite 多页构建）
+-├── .github/workflows/       # CI（前端类型检查 + 构建、Rust 单元测试）
+ ├── src/                     # React 前端
+ │   ├── components/          # 播放栏、歌词页、队列、音频律动层（AudioFxLayer）、通用组件
+ │   ├── views/               # 资料库 / 播放列表 / 设置等页面
+@@ -114,7 +124,7 @@
          └── updater.rs       # GitHub Release 自动更新（下载 + SHA-256 校验 + 静默安装）
  ```
  
@@ -36,7 +118,16 @@ index 9b58588..a0ba45c 100644
  
  ### 💡 核心设计亮点：WebView2 TrySuspend 深度休眠与事件驱动后台切歌（Windows）
  
-@@ -196,7 +207,7 @@ cd src-tauri && cargo test --bin rustmusic --locked
+@@ -162,7 +172,7 @@ sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev
+ 
+ （Rust 侧的其它 D-Bus 用途——MPRIS 媒体控制——走纯 Rust 的 zbus；音频输出经 cpal 走 ALSA/PipeWire，故需要 `libasound2-dev`。WebKitGTK 的 WebView 内媒体元素依赖 GStreamer 插件，建议一并安装：`sudo apt install gstreamer1.0-plugins-base gstreamer1.0-plugins-good`。）
+ 
+-测试（与 CI 一致）：
++测试（本地执行，本项目不使用 GitHub Actions）：
+ 
+ ```bash
+ npm run build                                          # 先构建前端（tauri 上下文引用 dist）
+@@ -196,7 +206,7 @@ cd src-tauri && cargo test --bin rustmusic --locked
  - [ ] QQ / 酷狗 / Navidrome 歌词翻译（网易云已支持）
  - [ ] 音频转码 / 标签批量编辑
  - [x] Linux 构建
@@ -47,10 +138,10 @@ index 9b58588..a0ba45c 100644
  
 diff --git "a/macOS-\351\200\202\351\205\215\350\257\264\346\230\216.md" "b/macOS-\351\200\202\351\205\215\350\257\264\346\230\216.md"
 new file mode 100644
-index 0000000..4210325
+index 0000000..694b178
 --- /dev/null
 +++ "b/macOS-\351\200\202\351\205\215\350\257\264\346\230\216.md"
-@@ -0,0 +1,124 @@
+@@ -0,0 +1,127 @@
 +# RustMusic macOS 版（0.7.1，Apple Silicon）
 +
 +上游项目：[LingyunStudio/RustMusic](https://github.com/LingyunStudio/RustMusic)（Tauri 2 + React + Rust，官方只发 Windows / Linux）。
@@ -148,7 +239,8 @@ index 0000000..4210325
 +- 启动：/Applications 中启动正常，无钥匙串弹窗，资料库空态干净 ✅
 +- 外壳：原生红绿灯 + 中文菜单栏「RustMusic 文件 编辑 显示 窗口」，三套主题（标准 / 拟物 / 液态玻璃）下
 +  侧栏品牌区都不压红绿灯 ✅
-+- 音频：m4a、WAV 在 CoreAudio 默认设备正常播放，位置推进、暂停、切歌正常 ✅
++- 音频：m4a、WAV、OGG(Vorbis) 在 CoreAudio 默认设备正常播放，位置推进、暂停、切歌正常 ✅
++  （OGG 用 ffmpeg 生成的 `Example.ogg` 实测：资料库识别为 `ogg`，播放位置推进到 0:04 / 0:06）
 +- 桌面歌词：「词」按钮打开 800×150 透明浮窗，文字浮在播放条之上、无底色 ✅
 +- 迷你小窗：360×118 小窗打开正常，⤢ 还原主窗口正常 ✅
 +- 系统媒体控制：控制中心「正在播放」显示曲目 / 应用图标，可播放暂停 ✅
@@ -173,8 +265,13 @@ index 0000000..4210325
 +npm run tauri build          # 产出 src-tauri/target/release/bundle/{macos,dmg}
 +```
 +
++> 本项目**不使用 GitHub Actions**：上游继承的 `.github/workflows/ci.yml` 已移除，仓库的 Actions 权限也已关闭，构建与测试全部在本机执行（`npm run tauri build` / `cd src-tauri && cargo test --bin rustmusic --locked`）。原因：那份 Windows+Linux CI 会在仓库里生成约 1.6 GB 的 Rust 编译缓存，产生按 GB-月计费的 Actions 存储费用。
++
 +本地开发：`npm run tauri dev`。若要对外分发并消除 Gatekeeper 提示，需要 Apple Developer 证书做正式签名 + 公证
 +（`APPLE_ID` / `APPLE_PASSWORD` / `APPLE_TEAM_ID` 或 `APPLE_API_*`），此时可去掉 `signingIdentity: "-"`。
+diff --git a/rustmusic-macos-port.patch b/rustmusic-macos-port.patch
+new file mode 100644
+index 0000000..3dd06c8
 diff --git a/src-tauri/Cargo.lock b/src-tauri/Cargo.lock
 index 6dd3732..b3c1fcc 100644
 --- a/src-tauri/Cargo.lock

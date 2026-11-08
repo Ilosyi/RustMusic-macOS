@@ -129,8 +129,8 @@ export interface Store {
       | ((cur: import("../types").SourcesResult | null) => import("../types").SourcesResult | null)
   ): void;
   /** 在线音源页当前音源页签（切页保留） */
-  sourcesTab: "bilibili" | "navidrome" | "other" | "downloads";
-  setSourcesTab(t: "bilibili" | "navidrome" | "other" | "downloads"): void;
+  sourcesTab: "bilibili" | "baidu" | "navidrome" | "other" | "downloads";
+  setSourcesTab(t: "bilibili" | "baidu" | "navidrome" | "other" | "downloads"): void;
 
   quality: string;
   /** 三源分别的播放音质（standard/high/lossless/hires，qq 另有 master=甄品母带） */
