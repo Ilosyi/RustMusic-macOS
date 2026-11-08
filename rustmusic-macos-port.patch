@@ -73,7 +73,7 @@ index a9845bc..0000000
 -        working-directory: src-tauri
 -        run: cargo test --bin rustmusic --locked
 diff --git a/README.md b/README.md
-index 9b58588..8ce4a1c 100644
+index 9b58588..a186139 100644
 --- a/README.md
 +++ b/README.md
 @@ -2,12 +2,25 @@
@@ -97,7 +97,7 @@ index 9b58588..8ce4a1c 100644
 +>
 +> macOS 适配内容包括：系统原生 Overlay 标题栏（红绿灯）与三套界面体系自适应、中文化应用菜单栏（修复 ⌘C/⌘V/⌘Q 失效）、点 Dock 图标恢复隐藏窗口、菜单栏模板图标、透明桌面歌词浮窗、迷你小窗、系统媒体控制（控制中心 / 键盘媒体键），凭据改为本机文件存储（避免每次升级都弹钥匙串密码框），以及 OGG 解码补全。
 +>
-+> 另含原创功能：**百度网盘作为原生音源**——在「在线音源」里扫码登录，浏览网盘目录、整棵文件夹导入成专辑，边下边播（缓存可复用）。
++> 另含原创功能：**百度网盘作为原生音源**——在「在线音源」里扫码登录，浏览网盘目录、整棵文件夹导入成**一个同名播放列表**（只收音频，mp4 等视频容器自动跳过），边下边播（缓存可复用）。批量管理还支持按住拖动连续多选。
 +> 详见 [macOS-适配说明.md](macOS-适配说明.md)。
 +
  ## ✨ 功能特性
@@ -140,11 +140,11 @@ index 9b58588..8ce4a1c 100644
  
 diff --git "a/macOS-\351\200\202\351\205\215\350\257\264\346\230\216.md" "b/macOS-\351\200\202\351\205\215\350\257\264\346\230\216.md"
 new file mode 100644
-index 0000000..60b0293
+index 0000000..4127119
 --- /dev/null
 +++ "b/macOS-\351\200\202\351\205\215\350\257\264\346\230\216.md"
-@@ -0,0 +1,152 @@
-+# RustMusic macOS 版（0.7.2，Apple Silicon）
+@@ -0,0 +1,165 @@
++# RustMusic macOS 版（0.7.3，Apple Silicon）
 +
 +上游项目：[LingyunStudio/RustMusic](https://github.com/LingyunStudio/RustMusic)（Tauri 2 + React + Rust，官方只发 Windows / Linux）。
 +本仓库是在上游 **v0.7.1**（`3a7a452`）之上打的 macOS 适配分支，已在本机（macOS 26 / Apple Silicon / arm64）实测通过。
@@ -153,19 +153,32 @@ index 0000000..60b0293
 +
 +| 文件 | 说明 |
 +| --- | --- |
-+| `RustMusic_0.7.2_aarch64.dmg` | 安装镜像，双击后把 RustMusic 拖进 Applications（7.3 MB） |
++| `RustMusic_0.7.3_aarch64.dmg` | 安装镜像，双击后把 RustMusic 拖进 Applications（7.3 MB） |
 +| `RustMusic.app` | 已 ad-hoc 签名的应用本体，可直接拖进 /Applications |
 +| `rustmusic-macos-port.patch` | 相对上游 v0.7.1 的全部改动（`git diff`，含新增文件） |
 +
-+SHA-256（dmg）：`4f9695afb99c112b75e797ee6da77f83cedfb82f8c6bc35b253494cd49a7910a`
++SHA-256（dmg）：`e614215d73a54fde267d1a0df39aa60daa18b2295a7c7d9ea288338b33fd5260`
 +
 +## 安装 / 首次运行
 +
-+1. 打开 `RustMusic_0.7.2_aarch64.dmg`，把 RustMusic 拖到 Applications。
++1. 打开 `RustMusic_0.7.3_aarch64.dmg`，把 RustMusic 拖到 Applications。
 +2. 首次启动若提示「无法打开，因为无法验证开发者」：右键点图标 → 打开 → 再点「打开」；或执行
 +   `xattr -dr com.apple.quarantine /Applications/RustMusic.app`。
 +   （构建是 ad-hoc 签名、未走苹果公证，这是分发方式决定的，不是包坏了。）
 +3. 首次使用会正常启动，**不会**弹钥匙串密码框（见下方「凭据存储」）。
++
++## 0.7.3 新增：导入更干净、导入即进播放列表、批量拖选
++
++- **只导入音频**：扩展名白名单收敛为 `mp3 / flac / wav / ogg / oga / m4a / aac`，`mp4`、`m4b`（视频、有声书容器）
++  不再进库（之前会有 mp4 混进资料库）。已有库里的 mp4 行会被下一次启动清理掉。
++- **导入即进播放列表**：点「导入该文件夹」会把整棵目录里的曲目同时写进一个同名播放列表
++  （一个文件夹下有多张专辑时，是**一个**播放列表收录全部专辑，而不是按专辑拆成一堆列表），
++  左侧「播放列表」里立刻出现，可整体播放 / 拖选 / 从歌单移除；重复导入同一目录是合并，不会重复。
++- **历史上的导入自动补登记**：0.7.2 之前导入过的目录，打开「百度网盘」标签页时会按库里的记录补建播放列表（幂等）。
++- **播放列表里的来源标签**显示「百度网盘」（之前错误地落到「QQ音乐」）。
++- **批量管理支持按住拖动多选**：进入批量管理后，按住某一行往下（或往上）拖，即可连续选中经过的行；
++  从已选行开始拖则是连续取消选中，行为和访达 / 资源管理器一致。
++- 补了 `baidupan` 的单元测试（扩展名白名单、播放列表命名、专辑 / 歌手 / 曲名推导）。
 +
 +## 0.7.2 新增：百度网盘作为原生音源
 +
@@ -297,7 +310,7 @@ index 0000000..60b0293
 +本地开发：`npm run tauri dev`。若要对外分发并消除 Gatekeeper 提示，需要 Apple Developer 证书做正式签名 + 公证
 +（`APPLE_ID` / `APPLE_PASSWORD` / `APPLE_TEAM_ID` 或 `APPLE_API_*`），此时可去掉 `signingIdentity: "-"`。
 diff --git a/package.json b/package.json
-index 738c3e4..8c0f4d4 100644
+index 738c3e4..c95f07b 100644
 --- a/package.json
 +++ b/package.json
 @@ -1,7 +1,7 @@
@@ -305,15 +318,15 @@ index 738c3e4..8c0f4d4 100644
    "name": "rustmusic",
    "private": true,
 -  "version": "0.7.1",
-+  "version": "0.7.2",
++  "version": "0.7.3",
    "type": "module",
    "scripts": {
      "dev": "vite",
 diff --git a/rustmusic-macos-port.patch b/rustmusic-macos-port.patch
 new file mode 100644
-index 0000000..0a5766c
+index 0000000..3c88edf
 diff --git a/src-tauri/Cargo.lock b/src-tauri/Cargo.lock
-index 6dd3732..fd53f2c 100644
+index 6dd3732..3ac81e5 100644
 --- a/src-tauri/Cargo.lock
 +++ b/src-tauri/Cargo.lock
 @@ -3988,7 +3988,7 @@ dependencies = [
@@ -321,7 +334,7 @@ index 6dd3732..fd53f2c 100644
  [[package]]
  name = "rustmusic"
 -version = "0.7.1"
-+version = "0.7.2"
++version = "0.7.3"
  dependencies = [
   "aes",
   "base64 0.22.1",
@@ -361,14 +374,14 @@ index 6dd3732..fd53f2c 100644
   "libc",
   "log",
 diff --git a/src-tauri/Cargo.toml b/src-tauri/Cargo.toml
-index ad02359..b39521c 100644
+index ad02359..467ee6f 100644
 --- a/src-tauri/Cargo.toml
 +++ b/src-tauri/Cargo.toml
 @@ -1,6 +1,6 @@
  [package]
  name = "rustmusic"
 -version = "0.7.1"
-+version = "0.7.2"
++version = "0.7.3"
  description = "RustMusic - 精美的高性能音乐播放器"
  authors = ["RustMusic"]
  license = "Apache-2.0"
@@ -409,10 +422,10 @@ index 0000000..a6d33fe
 Binary files /dev/null and b/src-tauri/icons/tray-template.png differ
 diff --git a/src-tauri/src/baidupan.rs b/src-tauri/src/baidupan.rs
 new file mode 100644
-index 0000000..1f55ccf
+index 0000000..a8e15b1
 --- /dev/null
 +++ b/src-tauri/src/baidupan.rs
-@@ -0,0 +1,1015 @@
+@@ -0,0 +1,1170 @@
 +//! 百度网盘音源：网页扫码登录（BDUSS 会话）+ 目录浏览 + 递归导入 + 直链播放。
 +//!
 +//! 与网易云 / QQ / 酷狗这类"曲库"音源不同，网盘没有全网检索接口，只能读取用户
@@ -461,7 +474,8 @@ index 0000000..1f55ccf
 +const C_BDUSS: &str = "baidu_bduss";
 +
 +/// 与本地资料库同口径的可解码扩展名（symphonia 侧没有 ape/wma 解码器，导入也会播不了）
-+const AUDIO_EXTS: [&str; 9] = ["mp3", "flac", "wav", "ogg", "oga", "m4a", "aac", "mp4", "m4b"];
++// 只收真正的音乐容器：mp4/m4b 是视频/有声书容器，网盘目录里常混着视频
++const AUDIO_EXTS: [&str; 7] = ["mp3", "flac", "wav", "ogg", "oga", "m4a", "aac"];
 +
 +/// 会话失效：内部信号，with_session 捕获后提示重新登录
 +const SESSION_EXPIRED: &str = "__baidu_session_expired__";
@@ -787,6 +801,11 @@ index 0000000..1f55ccf
 +    pub scanned: u32,
 +    pub imported: u32,
 +    pub skipped: u32,
++    /// 导入后自动建/更新的播放列表名（= 导入文件夹名）
++    pub playlist: String,
++    pub playlist_id: i64,
++    /// 本次新加入播放列表的曲目数（重复导入为 0）
++    pub added: u32,
 +}
 +
 +#[derive(Serialize)]
@@ -906,55 +925,106 @@ index 0000000..1f55ccf
 +/// 导入（或刷新）一个网盘文件夹：递归扫描音频并按目录结构生成专辑
 +pub fn import_root(state: &AppState, root: &str) -> Result<ImportStat, String> {
 +    let root = norm_dir(root);
-+    let items = with_session(state, |s| list_all(s, &root))?;
++    let mut items = with_session(state, |s| list_all(s, &root))?;
++    // 播放列表按「专辑 → 路径」排好，多专辑文件夹导入后是一张有序的整单
++    items.sort_by(|a, b| {
++        let (aa, _, _) = meta_from(&root, a);
++        let (ba, _, _) = meta_from(&root, b);
++        aa.cmp(&ba).then_with(|| a.path.cmp(&b.path))
++    });
 +    let scanned = items.len() as u32;
 +    let mut conn = state.db.lock();
-+    let tx = conn.transaction().map_err(|e| e.to_string())?;
 +    let ts = now_ms() as i64 / 1000;
 +    let mut imported = 0u32;
-+    for it in &items {
-+        let (album, artist, title) = meta_from(&root, it);
-+        tx.execute(
-+            "INSERT INTO baidu_tracks(fs_id, root, path, album, artist, title, ext, size, mtime, imported_at)
-+             VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10)
-+             ON CONFLICT(fs_id) DO UPDATE SET
-+               root=excluded.root, path=excluded.path, album=excluded.album,
-+               artist=excluded.artist, title=excluded.title, ext=excluded.ext,
-+               size=excluded.size, mtime=excluded.mtime, imported_at=excluded.imported_at",
-+            params![
-+                it.fs_id,
-+                root,
-+                it.path,
-+                album,
-+                artist,
++    {
++        let tx = conn.transaction().map_err(|e| e.to_string())?;
++        for it in &items {
++            let (album, artist, title) = meta_from(&root, it);
++            tx.execute(
++                "INSERT INTO baidu_tracks(fs_id, root, path, album, artist, title, ext, size, mtime, imported_at)
++                 VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10)
++                 ON CONFLICT(fs_id) DO UPDATE SET
++                   root=excluded.root, path=excluded.path, album=excluded.album,
++                   artist=excluded.artist, title=excluded.title, ext=excluded.ext,
++                   size=excluded.size, mtime=excluded.mtime, imported_at=excluded.imported_at",
++                params![
++                    it.fs_id,
++                    root,
++                    it.path,
++                    album,
++                    artist,
++                    title,
++                    it.ext,
++                    it.size as i64,
++                    it.mtime,
++                    ts
++                ],
++            )
++            .map_err(|e| format!("写入导入记录失败：{e}"))?;
++            imported += 1;
++        }
++        let mut all = roots_list(&tx);
++        if !all.iter().any(|r| r == &root) {
++            all.push(root.clone());
++            set_roots(&tx, &all);
++        }
++        tx.commit().map_err(|e| e.to_string())?;
++    }
++
++    // 导入即加入播放列表（与网易云/QQ/酷狗歌单导入走同一套入库逻辑）：
++    // 列表名取导入文件夹名，remote_id = 网盘目录路径，重复导入合并去重
++    let name = root_name(&root);
++    let rows: Vec<crate::commands::playlists::OnlineTrackRow> = items
++        .iter()
++        .map(|it| {
++            let (album, artist, title) = meta_from(&root, it);
++            crate::commands::playlists::OnlineTrackRow {
++                rid: it.fs_id.clone(),
 +                title,
-+                it.ext,
-+                it.size as i64,
-+                it.mtime,
-+                ts
-+            ],
-+        )
-+        .map_err(|e| format!("写入导入记录失败：{e}"))?;
-+        imported += 1;
-+    }
-+    let mut all = roots_list(&tx);
-+    if !all.iter().any(|r| r == &root) {
-+        all.push(root.clone());
-+        set_roots(&tx, &all);
-+    }
-+    tx.commit().map_err(|e| e.to_string())?;
++                artist,
++                album,
++                cover: String::new(),
++                duration_ms: 0,
++                media_mid: it.ext.clone(),
++                vip: false,
++            }
++        })
++        .collect();
++    let (playlist_id, added) =
++        crate::commands::playlists::import_online_tracks(&conn, KIND, &root, &name, &rows)?;
++
 +    Ok(ImportStat {
 +        root,
 +        scanned,
 +        imported,
 +        skipped: scanned.saturating_sub(imported),
++        playlist: name,
++        playlist_id,
++        added: added as u32,
 +    })
++}
++
++/// 目录按 path 切出最后一段作为播放列表名
++fn root_name(root: &str) -> String {
++    root.trim_end_matches('/')
++        .rsplit('/')
++        .find(|s| !s.is_empty())
++        .map(|s| s.to_string())
++        .unwrap_or_else(|| "百度网盘".to_string())
 +}
 +
 +pub fn remove_root(state: &AppState, root: &str) -> Result<u32, String> {
 +    let root = norm_dir(root);
 +    let mut conn = state.db.lock();
 +    let tx = conn.transaction().map_err(|e| e.to_string())?;
++    if let Some(pid) = crate::db::find_playlist_by_remote(&tx, KIND, &root, "") {
++        crate::db::delete_playlist(&tx, pid);
++    }
++    let _ = tx.execute(
++        "DELETE FROM online_tracks WHERE kind = ?1
++           AND rid IN (SELECT fs_id FROM baidu_tracks WHERE root = ?2)",
++        params![KIND, root],
++    );
 +    let n = tx
 +        .execute("DELETE FROM baidu_tracks WHERE root = ?1", params![root])
 +        .map_err(|e| e.to_string())?;
@@ -963,6 +1033,46 @@ index 0000000..1f55ccf
 +    set_roots(&tx, &all);
 +    tx.commit().map_err(|e| e.to_string())?;
 +    Ok(n as u32)
++}
++
++/// 把库里已导入的曲目按导入目录重建播放列表（幂等）。
++/// 0.7.2 之前的导入没有登记播放列表，升级后靠它一次性补齐；
++/// 之后每次导入也会走同一套 `import_online_tracks`。
++pub fn rebuild_playlists(conn: &Connection) -> Result<u32, String> {
++    let roots = roots_list(conn);
++    let mut n = 0u32;
++    for root in roots {
++        let mut stmt = conn
++            .prepare(
++                "SELECT fs_id, title, artist, album, ext FROM baidu_tracks
++                 WHERE root = ?1 ORDER BY album, path",
++            )
++            .map_err(|e| e.to_string())?;
++        let rows: Vec<crate::commands::playlists::OnlineTrackRow> = stmt
++            .query_map(params![root], |r| {
++                Ok(crate::commands::playlists::OnlineTrackRow {
++                    rid: r.get(0)?,
++                    title: r.get(1)?,
++                    artist: r.get(2)?,
++                    album: r.get(3)?,
++                    cover: String::new(),
++                    duration_ms: 0,
++                    media_mid: r.get::<_, String>(4)?,
++                    vip: false,
++                })
++            })
++            .map_err(|e| e.to_string())?
++            .filter_map(|x| x.ok())
++            .collect();
++        if rows.is_empty() {
++            continue;
++        }
++        let name = root_name(&root);
++        let (_pid, _added) =
++            crate::commands::playlists::import_online_tracks(conn, KIND, &root, &name, &rows)?;
++        n += 1;
++    }
++    Ok(n)
 +}
 +
 +pub fn albums(conn: &Connection) -> Vec<BdAlbum> {
@@ -1428,6 +1538,64 @@ index 0000000..1f55ccf
 +fn token_value(raw: &str) -> String {
 +    raw.trim_matches('"').replace("\\/", "/")
 +}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    fn item(path: &str) -> BdItem {
++        BdItem {
++            fs_id: "1".into(),
++            name: path.rsplit('/').next().unwrap_or(path).to_string(),
++            path: path.to_string(),
++            is_dir: false,
++            size: 0,
++            mtime: 0,
++            ext: path.rsplit('.').next().unwrap_or("").to_lowercase(),
++        }
++    }
++
++    #[test]
++    fn 只认音频扩展名_视频容器不算() {
++        for ext in ["mp3", "FLAC", "wav", "ogg", "oga", "m4a", "aac"] {
++            assert!(is_audio(ext), "{ext} 应该算音频");
++        }
++        // mp4 / m4b 是视频、有声书容器，导入时要跳过
++        for ext in ["mp4", "m4b", "ape", "wma", "jpg", "txt", "zip", ""] {
++            assert!(!is_audio(ext), "{ext} 不该算音频");
++        }
++    }
++
++    #[test]
++    fn 播放列表名取最后一段路径() {
++        assert_eq!(root_name("/我的资源/音乐songs/V家专辑"), "V家专辑");
++        assert_eq!(root_name("/我的资源/音乐songs/V家专辑/"), "V家专辑");
++        assert_eq!(root_name("/"), "百度网盘");
++    }
++
++    #[test]
++    fn 专辑歌手从目录结构与文件名推导() {
++        let root = "/我的资源/音乐songs/V家专辑";
++        let (album, artist, title) =
++            meta_from(root, &item("/我的资源/音乐songs/V家专辑/【纯白2021】/01. 洛天依 - 千本樱.flac"));
++        assert_eq!(album, "【纯白2021】");
++        assert_eq!(artist, "洛天依");
++        assert_eq!(title, "千本樱");
++
++        // 没有「歌手 - 歌名」、也没有歌手层目录 → 歌手留空（界面显示「未知歌手」）
++        let (album, artist, title) =
++            meta_from(root, &item("/我的资源/音乐songs/V家专辑/某专辑/02. 曲目2.wav"));
++        assert_eq!(album, "某专辑");
++        assert_eq!(artist, "");
++        assert_eq!(title, "曲目2");
++
++        // 目录里有歌手层时用倒数第三段
++        let (album, artist, _title) =
++            meta_from(root, &item("/我的资源/音乐songs/V家专辑/洛天依/某专辑/03 曲目3.wav"));
++        assert_eq!(album, "某专辑");
++        assert_eq!(artist, "洛天依");
++    }
++}
 diff --git a/src-tauri/src/commands/app.rs b/src-tauri/src/commands/app.rs
 index 4f5162c..7b18fea 100644
 --- a/src-tauri/src/commands/app.rs
@@ -1450,10 +1618,10 @@ index 4f5162c..7b18fea 100644
      {
 diff --git a/src-tauri/src/commands/baidupan.rs b/src-tauri/src/commands/baidupan.rs
 new file mode 100644
-index 0000000..8db67bd
+index 0000000..49f0b4e
 --- /dev/null
 +++ b/src-tauri/src/commands/baidupan.rs
-@@ -0,0 +1,239 @@
+@@ -0,0 +1,251 @@
 +//! 百度网盘音源的命令层（扫码登录、浏览、导入、播放）。
 +//!
 +//! 与其它在线音源一致：网络与凭据 IO 全部丢进阻塞线程池（`super::blocking`）。
@@ -1582,10 +1750,22 @@ index 0000000..8db67bd
 +
 +#[tauri::command]
 +pub async fn baidu_roots(
-+    state: State<'_, AppState>,
++    app: AppHandle,
 +) -> Result<Vec<crate::baidupan::RootInfo>, String> {
-+    let conn = state.db.lock();
-+    Ok(crate::baidupan::roots(&conn))
++    blocking(move || {
++        let state = app.state::<AppState>();
++        let conn = state.db.lock();
++        // 每次进程内首次拉取根目录时，把已导入曲目补齐成播放列表
++        //（0.7.2 之前的导入没有登记列表；幂等，重复跑不会重复加曲）
++        static REBUILT: std::sync::Once = std::sync::Once::new();
++        REBUILT.call_once(|| {
++            if let Err(e) = crate::baidupan::rebuild_playlists(&conn) {
++                eprintln!("[baidu] 重建播放列表失败: {e}");
++            }
++        });
++        Ok(crate::baidupan::roots(&conn))
++    })
++    .await
 +}
 +
 +#[tauri::command]
@@ -1694,7 +1874,7 @@ index 0000000..8db67bd
 +    .await
 +}
 diff --git a/src-tauri/src/commands/mod.rs b/src-tauri/src/commands/mod.rs
-index 5685812..2f6f052 100644
+index 5685812..f9244a6 100644
 --- a/src-tauri/src/commands/mod.rs
 +++ b/src-tauri/src/commands/mod.rs
 @@ -1,6 +1,7 @@
@@ -1705,7 +1885,15 @@ index 5685812..2f6f052 100644
  mod bilibili;
  mod download;
  mod kugou;
-@@ -16,6 +17,7 @@ mod sources;
+@@ -9,13 +10,14 @@ mod lyrics;
+ mod navidrome;
+ mod netease;
+ mod playback;
+-mod playlists;
++pub(crate) mod playlists;
+ mod qq;
+ mod settings;
+ mod sources;
  mod updater;
  
  pub use app::*;
@@ -2238,7 +2426,7 @@ index 0b09e08..05600e9 100644
          .menu(&menu)
          .show_menu_on_left_click(false)
 diff --git a/src-tauri/tauri.conf.json b/src-tauri/tauri.conf.json
-index 66c366d..7a1a3c2 100644
+index 66c366d..3e8a69d 100644
 --- a/src-tauri/tauri.conf.json
 +++ b/src-tauri/tauri.conf.json
 @@ -1,7 +1,7 @@
@@ -2246,7 +2434,7 @@ index 66c366d..7a1a3c2 100644
    "$schema": "https://schema.tauri.app/config/2",
    "productName": "RustMusic",
 -  "version": "0.7.1",
-+  "version": "0.7.2",
++  "version": "0.7.3",
    "identifier": "com.rustmusic.app",
    "build": {
      "beforeDevCommand": "npm run dev",
@@ -2442,6 +2630,159 @@ index 6bee7ac..347f7b6 100644
          <button
            className="titlebar-btn w-11 h-9 flex items-center justify-center text-[var(--ink-2)] hover:bg-[var(--shade)] hover:text-[var(--ink)] transition-colors"
            onClick={() => win.minimize()}
+diff --git a/src/components/TrackList.liquid.tsx b/src/components/TrackList.liquid.tsx
+index 7f5429e..a7b3b8b 100644
+--- a/src/components/TrackList.liquid.tsx
++++ b/src/components/TrackList.liquid.tsx
+@@ -585,7 +585,9 @@ export default function TrackList({
+                       ? "B站"
+                       : e.kind === "navidrome"
+                         ? "Navidrome"
+-                        : "QQ音乐"}
++                        : e.kind === "baidu"
++                          ? "百度网盘"
++                          : "QQ音乐"}
+               </span>
+               {e.vip && !dead && (
+                 <span className="text-[9.5px] px-1.5 py-0.5 rounded bg-[var(--accent-weak)] text-[var(--accent-strong)] font-bold shrink-0">
+diff --git a/src/components/TrackList.skeuo.tsx b/src/components/TrackList.skeuo.tsx
+index 855c680..0c6c7f3 100644
+--- a/src/components/TrackList.skeuo.tsx
++++ b/src/components/TrackList.skeuo.tsx
+@@ -588,7 +588,9 @@ export default function TrackList({
+                       ? "B站"
+                       : e.kind === "navidrome"
+                         ? "Navidrome"
+-                        : "QQ音乐"}
++                        : e.kind === "baidu"
++                          ? "百度网盘"
++                          : "QQ音乐"}
+               </span>
+               {e.vip && !dead && (
+                 <span className="text-[9.5px] px-1.5 py-0.5 rounded bg-[var(--accent-weak)] text-[var(--accent-strong)] font-bold shrink-0">
+diff --git a/src/components/TrackList.standard.tsx b/src/components/TrackList.standard.tsx
+index fb8b18a..c6cb38b 100644
+--- a/src/components/TrackList.standard.tsx
++++ b/src/components/TrackList.standard.tsx
+@@ -581,7 +581,9 @@ export default function TrackList({
+                       ? "B站"
+                       : e.kind === "navidrome"
+                         ? "Navidrome"
+-                        : "QQ音乐"}
++                        : e.kind === "baidu"
++                          ? "百度网盘"
++                          : "QQ音乐"}
+               </span>
+               {e.vip && !dead && (
+                 <span className="text-[9.5px] px-1.5 py-0.5 rounded bg-[var(--accent-weak)] text-[var(--accent-strong)] font-bold shrink-0">
+diff --git a/src/components/useDragSelect.ts b/src/components/useDragSelect.ts
+new file mode 100644
+index 0000000..6e14448
+--- /dev/null
++++ b/src/components/useDragSelect.ts
+@@ -0,0 +1,102 @@
++import { useCallback, useEffect, useRef, useState } from "react";
++
++interface Options {
++  /** 仅在批量管理模式下启用 */
++  enabled: boolean;
++  /** 行在视图中的顺序（rowid 列表），用于计算框选区间 */
++  rowids: number[];
++  /** 当前已选中的 rowid */
++  sel: Set<number>;
++  setSel: (next: Set<number>) => void;
++  /** 拖拽开始/结束时回调（用来临时关掉行悬停效果） */
++  onDragChange?: (dragging: boolean) => void;
++}
++
++/**
++ * 批量管理里的「按住拖动多选」。
++ *
++ * 交互：在某一行按下鼠标 → 该行立即反选，并把它记为锚点；
++ * 之后把鼠标拖过其它行 → 锚点到当前行之间的所有行一起选中/取消（
++ * 方向跟随第一行的动作，和访达/资源管理器的框选一致）；
++ * 松开鼠标结束。
++ */
++export function useDragSelect({ enabled, rowids, sel, setSel, onDragChange }: Options) {
++  const dragging = useRef(false);
++  const anchor = useRef<number | null>(null);
++  const base = useRef<Set<number>>(new Set());
++  const selectMode = useRef(true);
++  const [, force] = useState(0);
++
++  const end = useCallback(() => {
++    if (!dragging.current) return;
++    dragging.current = false;
++    anchor.current = null;
++    document.body.style.removeProperty("user-select");
++    onDragChange?.(false);
++    force((n) => n + 1);
++  }, [onDragChange]);
++
++  useEffect(() => {
++    if (!enabled) {
++      end();
++      return;
++    }
++    const up = () => end();
++    window.addEventListener("mouseup", up);
++    window.addEventListener("blur", up);
++    return () => {
++      window.removeEventListener("mouseup", up);
++      window.removeEventListener("blur", up);
++    };
++  }, [enabled, end]);
++
++  /** 行上的 onMouseDown */
++  const onRowMouseDown = useCallback(
++    (rowid: number, ev: React.MouseEvent) => {
++      if (!enabled || ev.button !== 0) return;
++      // 复选框、按钮、输入框等交互元素交给自己处理
++      if ((ev.target as HTMLElement).closest("button, input, textarea, a, [data-no-drag-select]")) {
++        return;
++      }
++      ev.preventDefault();
++      if (window.getSelection()?.removeAllRanges) window.getSelection()!.removeAllRanges();
++      const idx = rowids.indexOf(rowid);
++      if (idx < 0) return;
++      const next = new Set(sel);
++      selectMode.current = !next.has(rowid);
++      if (selectMode.current) next.add(rowid);
++      else next.delete(rowid);
++      base.current = next;
++      anchor.current = idx;
++      dragging.current = true;
++      document.body.style.setProperty("user-select", "none");
++      onDragChange?.(true);
++      setSel(next);
++      force((n) => n + 1);
++    },
++    [enabled, rowids, sel, setSel, onDragChange],
++  );
++
++  /** 行上的 onMouseEnter */
++  const onRowEnter = useCallback(
++    (rowid: number) => {
++      if (!dragging.current || !enabled) return;
++      const idx = rowids.indexOf(rowid);
++      const from = anchor.current;
++      if (idx < 0 || from == null) return;
++      const lo = Math.min(from, idx);
++      const hi = Math.max(from, idx);
++      const next = new Set(base.current);
++      for (let i = lo; i <= hi; i++) {
++        const id = rowids[i];
++        if (id == null) continue;
++        if (selectMode.current) next.add(id);
++        else next.delete(id);
++      }
++      setSel(next);
++    },
++    [enabled, rowids, setSel],
++  );
++
++  return { onRowMouseDown, onRowEnter, dragging: dragging.current };
++}
 diff --git a/src/desktop-lyrics/main.tsx b/src/desktop-lyrics/main.tsx
 index 990b895..85521d5 100644
 --- a/src/desktop-lyrics/main.tsx
@@ -2519,10 +2860,27 @@ index 981c16d..d2aa007 100644
  ReactDOM.createRoot(document.getElementById("root")!).render(
    <React.StrictMode>
 diff --git a/src/store/contract.ts b/src/store/contract.ts
-index ccde581..f926829 100644
+index ccde581..e3ad992 100644
 --- a/src/store/contract.ts
 +++ b/src/store/contract.ts
-@@ -129,8 +129,8 @@ export interface Store {
+@@ -15,6 +15,7 @@ import type {
+   QqSong,
+   KgSong,
+   Playlist,
++  BaiduQueueTrack,
+   QueueItem,
+   RepeatMode,
+   ScanState,
+@@ -104,6 +105,8 @@ export interface Store {
+ 
+   /** B 站曲目元数据缓存（键 = rid "BVxxx-cid"，我喜欢/播放列表/队列条目用） */
+   biliCache: Record<string, BiliTrack>;
++  /** 百度网盘元数据缓存（键 = fs_id，播放列表/最近播放恢复用） */
++  baiduCache: Record<string, BaiduQueueTrack>;
+   /** Navidrome 元数据缓存（键 = 歌曲 id，最近播放/队列恢复用） */
+   ndCache: Record<
+     string,
+@@ -129,8 +132,8 @@ export interface Store {
        | ((cur: import("../types").SourcesResult | null) => import("../types").SourcesResult | null)
    ): void;
    /** 在线音源页当前音源页签（切页保留） */
@@ -2533,11 +2891,146 @@ index ccde581..f926829 100644
  
    quality: string;
    /** 三源分别的播放音质（standard/high/lossless/hires，qq 另有 master=甄品母带） */
+diff --git a/src/store/onlineSlice.ts b/src/store/onlineSlice.ts
+index ba6d3d7..e76142d 100644
+--- a/src/store/onlineSlice.ts
++++ b/src/store/onlineSlice.ts
+@@ -33,6 +33,7 @@ type Fields = Pick<
+   | "kugouLoggedIn"
+   | "kugouNickname"
+   | "biliCache"
++  | "baiduCache"
+   | "ndCache"
+   | "biliLoggedIn"
+   | "biliNickname"
+@@ -179,6 +180,7 @@ export const createOnlineSlice: StateCreator<Store, [], [], Fields> = (set, get)
+   kugouNickname: "",
+ 
+   biliCache: {},
++  baiduCache: {},
+   ndCache: {},
+   biliLoggedIn: false,
+   biliNickname: "",
+diff --git a/src/store/playerSlice.ts b/src/store/playerSlice.ts
+index f70d6c3..752473a 100644
+--- a/src/store/playerSlice.ts
++++ b/src/store/playerSlice.ts
+@@ -95,7 +95,14 @@ function titleOfQueueItem(
+   item: { kind: string; id: number | string },
+   caches: Pick<
+     Store,
+-    "tracks" | "neteaseCache" | "qqCache" | "kugouCache" | "biliCache" | "ndCache" | "sources"
++    | "tracks"
++    | "neteaseCache"
++    | "qqCache"
++    | "kugouCache"
++    | "biliCache"
++    | "ndCache"
++    | "baiduCache"
++    | "sources"
+   >
+ ): string {
+   if (item.kind === "track") {
+@@ -110,6 +117,9 @@ function titleOfQueueItem(
+   if (item.kind === "kugou") {
+     return caches.kugouCache[item.id as string]?.name ?? `酷狗 #${item.id}`;
+   }
++  if (item.kind === "baidu") {
++    return caches.baiduCache[item.id as string]?.title ?? `百度网盘 #${item.id}`;
++  }
+   if (item.kind === "navidrome") {
+     return caches.ndCache[item.id as string]?.title ?? `Navidrome #${item.id}`;
+   }
+@@ -259,6 +269,7 @@ export const createPlayerSlice: StateCreator<Store, [], [], Fields> = (set, get)
+     const kugouCache = { ...get().kugouCache };
+     const biliCache = { ...get().biliCache };
+     const ndCache = { ...get().ndCache };
++    const baiduCache = { ...get().baiduCache };
+     for (const e of entries) {
+       if (e.kind === "local" && e.trackId != null) {
+         queue.push({ kind: "track", id: e.trackId });
+@@ -310,6 +321,16 @@ export const createPlayerSlice: StateCreator<Store, [], [], Fields> = (set, get)
+           durationMs: Math.round(e.duration * 1000),
+         };
+         queue.push({ kind: "bilibili", id: e.onlineId });
++      } else if (e.kind === "baidu" && e.onlineId) {
++        baiduCache[e.onlineId] = {
++          fsId: e.onlineId,
++          title: e.title,
++          artist: e.artist,
++          album: e.album,
++          // media_mid 列在导入时写了扩展名（wav/flac/…），播放时用来给缓存命名
++          ext: e.mediaMid ?? "",
++        };
++        queue.push({ kind: "baidu", id: e.onlineId });
+       } else if (e.kind === "navidrome" && e.onlineId) {
+         ndCache[e.onlineId] = {
+           title: e.title,
+@@ -336,6 +357,7 @@ export const createPlayerSlice: StateCreator<Store, [], [], Fields> = (set, get)
+       qqCache: capOnlineCache("qq", qqCache, get().qqCache, pinOf("qq")),
+       kugouCache: capOnlineCache("kugou", kugouCache, get().kugouCache, pinOf("kugou")),
+       ndCache: capOnlineCache("nd", ndCache, get().ndCache, pinOf("navidrome")),
++      baiduCache,
+       biliCache: capOnlineCache("bili", biliCache, get().biliCache, pinOf("bilibili")),
+       queue,
+       qIndex: target,
+@@ -410,6 +432,18 @@ export const createPlayerSlice: StateCreator<Store, [], [], Fields> = (set, get)
+       set({ biliCache: capOnlineCache("bili", biliCache, get().biliCache, pinnedIdsOf("bilibili", get())) });
+       return { kind: "bilibili", id: e.onlineId };
+     }
++    if (e.kind === "baidu" && e.onlineId) {
++      const baiduCache = { ...get().baiduCache };
++      baiduCache[e.onlineId] = {
++        fsId: e.onlineId,
++        title: e.title,
++        artist: e.artist,
++        album: e.album,
++        ext: e.mediaMid ?? "",
++      };
++      set({ baiduCache });
++      return { kind: "baidu", id: e.onlineId };
++    }
+     if (e.kind === "navidrome" && e.onlineId) {
+       const ndCache = { ...get().ndCache };
+       ndCache[e.onlineId] = {
+@@ -677,6 +711,23 @@ export const createPlayerSlice: StateCreator<Store, [], [], Fields> = (set, get)
+         })
+         .then(ok)
+         .catch((e) => fail(String(e)));
++    } else if (item.kind === "baidu") {
++      const t = get().baiduCache[item.id as string];
++      if (!t) {
++        fail("曲目信息缺失，请重新导入该专辑");
++        return;
++      }
++      api
++        .baiduPlay({
++          fsId: t.fsId,
++          title: t.title,
++          artist: t.artist,
++          album: t.album,
++          ext: t.ext ?? "",
++          durationMs: 0,
++        })
++        .then(ok)
++        .catch((e) => fail(String(e)));
+     } else if (item.kind === "bilibili") {
+       const t = get().biliCache[item.id as string];
+       if (!t) {
 diff --git a/src/types.ts b/src/types.ts
-index b9398fe..06a6c93 100644
+index b9398fe..1fdd563 100644
 --- a/src/types.ts
 +++ b/src/types.ts
-@@ -306,7 +306,82 @@ export interface CurrentTrack extends TrackInfo {
+@@ -38,7 +38,7 @@ export interface DropResult {
+ 
+ export interface PlaylistEntryMeta {
+   rowid: number;
+-  kind: "local" | "netease" | "qq" | "kugou" | "bilibili" | "navidrome";
++  kind: "local" | "netease" | "qq" | "kugou" | "bilibili" | "navidrome" | "baidu";
+   trackId: number | null;
+   onlineId: string | null;
+   title: string;
+@@ -306,13 +306,103 @@ export interface CurrentTrack extends TrackInfo {
  
  export type RepeatMode = "off" | "all" | "one";
  
@@ -2607,6 +3100,20 @@ index b9398fe..06a6c93 100644
 +  scanned: number;
 +  imported: number;
 +  skipped: number;
++  /** 导入后自动建/更新的播放列表名（= 导入文件夹名） */
++  playlist: string;
++  playlistId: number;
++  /** 本次新加入播放列表的曲目数（重复导入为 0） */
++  added: number;
++}
++
++/** 百度网盘曲目在队列里的元数据（播放列表/最近播放恢复用） */
++export interface BaiduQueueTrack {
++  fsId: string;
++  title: string;
++  artist: string;
++  album: string;
++  ext: string;
 +}
 +
 +export type QueueItemKind =
@@ -2621,6 +3128,14 @@ index b9398fe..06a6c93 100644
  
  export type QueueItem =
    | { kind: "track" | "netease" | "url"; id: number }
+   | { kind: "qq" | "kugou"; id: string }
+   | { kind: "bilibili"; id: string }
+-  | { kind: "navidrome"; id: string };
++  | { kind: "navidrome"; id: string }
++  | { kind: "baidu"; id: string };
+ 
+ export type ViewName =
+   | "library"
 diff --git a/src/utils.ts b/src/utils.ts
 index 4f57a27..65742af 100644
 --- a/src/utils.ts
@@ -2645,10 +3160,10 @@ index 4f57a27..65742af 100644
    if (!isFinite(ms) || ms <= 0) return "0:00";
 diff --git a/src/views/BaiduPanPanel.tsx b/src/views/BaiduPanPanel.tsx
 new file mode 100644
-index 0000000..5060c1f
+index 0000000..223f839
 --- /dev/null
 +++ b/src/views/BaiduPanPanel.tsx
-@@ -0,0 +1,615 @@
+@@ -0,0 +1,622 @@
 +//! 百度网盘音源面板（三个界面风格共用）。
 +//!
 +//! 只用 `--shade/--line/--ink*` 这套 CSS 变量和 `btn-primary/btn-secondary`，
@@ -2713,6 +3228,7 @@ index 0000000..5060c1f
 +
 +export default function BaiduPanPanel() {
 +  const toast = useStore((s) => s.toast);
++  const refreshPlaylists = useStore((s) => s.refreshPlaylists);
 +
 +  const [status, setStatus] = useState<BaiduStatus | null>(null);
 +  const [busy, setBusy] = useState("");
@@ -2740,10 +3256,12 @@ index 0000000..5060c1f
 +    try {
 +      setRoots(await api.baiduRoots());
 +      setAlbums(await api.baiduAlbums());
++      // 首次拉根目录时后端会把历史导入补登记成播放列表，这里顺带刷新左侧列表
++      await refreshPlaylists();
 +    } catch (e) {
 +      toast(String(e), "error");
 +    }
-+  }, [toast]);
++  }, [toast, refreshPlaylists]);
 +
 +  const loadDir = useCallback(
 +    async (target: string) => {
@@ -2878,8 +3396,11 @@ index 0000000..5060c1f
 +    try {
 +      const st = await api.baiduImport(dir);
 +      await loadRoots();
++      await refreshPlaylists();
++      // 导入即进播放列表：结果里带上列表名与新增条数，用户能在左侧直接找到
 +      toast(
-+        `导入完成：扫描 ${st.scanned} 个音频，新增 ${st.imported}，跳过 ${st.skipped}`,
++        `已导入 ${st.imported} 首到播放列表「${st.playlist}」` +
++          (st.added < st.imported ? `（${st.imported - st.added} 首此前已在该列表）` : ""),
 +        "success",
 +      );
 +    } catch (e) {
@@ -2893,6 +3414,7 @@ index 0000000..5060c1f
 +    try {
 +      const n = await api.baiduRemoveRoot(root);
 +      await loadRoots();
++      await refreshPlaylists();
 +      setOpenAlbum(null);
 +      toast(`已移除 ${n} 首`, "success");
 +    } catch (e) {
@@ -3366,6 +3888,258 @@ index d9e8e38..5df0465 100644
            </div>
          </div>
        ) : (
+diff --git a/src/views/PlaylistDetail.liquid.tsx b/src/views/PlaylistDetail.liquid.tsx
+index b90d4d3..5ea9fc8 100644
+--- a/src/views/PlaylistDetail.liquid.tsx
++++ b/src/views/PlaylistDetail.liquid.tsx
+@@ -26,6 +26,7 @@ import LocateCurrentPill from "../components/LocateCurrentPill";
+ import { useLocatePill } from "../hooks/useLocatePill";
+ import { clampMenuPos, fmtTime, matchSearch } from "../utils";
+ import CoverImg from "../components/CoverImg";
++import { useDragSelect } from "../components/useDragSelect";
+ import Modal from "../components/Modal";
+ import type { PlaylistEntryMeta } from "../types";
+ 
+@@ -95,6 +96,17 @@ type DetailRow =
+       cover: string;
+       durationMs: number;
+       liked: boolean;
++    }
++  | {
++      entry: PlaylistEntryMeta;
++      kind: "baidu";
++      id: string;
++      name: string;
++      artist: string;
++      album: string;
++      cover: string;
++      durationMs: number;
++      liked: boolean;
+     };
+ 
+ export default function PlaylistDetail({ id }: { id: number }) {
+@@ -240,6 +252,14 @@ export default function PlaylistDetail({ id }: { id: number }) {
+             liked: !!savedOnline[`navidrome-${e.onlineId}`],
+           };
+         }
++        if (e.kind === "baidu") {
++          return {
++            ...base,
++            kind: "baidu",
++            id: e.onlineId ?? "",
++            liked: !!savedOnline[`baidu-${e.onlineId}`],
++          };
++        }
+         return {
+           ...base,
+           kind: "qq",
+@@ -249,6 +269,14 @@ export default function PlaylistDetail({ id }: { id: number }) {
+       });
+   }, [pl, tracks, search, savedOnline]);
+ 
++  // 批量管理：按住鼠标拖动即可连续选中（不用一行一行点）
++  const drag = useDragSelect({
++    enabled: batchMode,
++    rowids: useMemo(() => list.map((r) => r.entry.rowid), [list]),
++    sel,
++    setSel,
++  });
++
+   const toggleSel = (rowid: number) => {
+     setSel((prev) => {
+       const next = new Set(prev);
+@@ -670,8 +698,11 @@ export default function PlaylistDetail({ id }: { id: number }) {
+                             : "hover:bg-[var(--shade-hover)] border border-transparent"
+                       } ${dead ? "opacity-45" : ""}`}
+                     title={dead ? `无法播放：${unavailable[`${r.kind}:${r.id}`]}` : undefined}
++                    onMouseDown={(ev) => drag.onRowMouseDown(r.entry.rowid, ev)}
++                    onMouseEnter={() => drag.onRowEnter(r.entry.rowid)}
+                     onClick={() => {
+-                      if (batchMode) toggleSel(r.entry.rowid);
++                      // 批量模式下由 onMouseDown 处理（拖动多选），这里不再重复切换
++                      if (batchMode) return;
+                     }}
+                     onDoubleClick={() => {
+                       if (!batchMode) playEntries(list.map((x) => x.entry), i);
+@@ -761,7 +792,9 @@ export default function PlaylistDetail({ id }: { id: number }) {
+                                     ? "B站"
+                                     : r.kind === "navidrome"
+                                       ? "Navidrome"
+-                                      : "QQ音乐"}
++                                      : r.kind === "baidu"
++                                        ? "百度网盘"
++                                        : "QQ音乐"}
+                             </span>
+                           )}
+                           {r.kind !== "track" && r.entry.vip && !dead && (
+diff --git a/src/views/PlaylistDetail.skeuo.tsx b/src/views/PlaylistDetail.skeuo.tsx
+index bf75183..08da018 100644
+--- a/src/views/PlaylistDetail.skeuo.tsx
++++ b/src/views/PlaylistDetail.skeuo.tsx
+@@ -26,6 +26,7 @@ import LocateCurrentPill from "../components/LocateCurrentPill";
+ import { useLocatePill } from "../hooks/useLocatePill";
+ import { clampMenuPos, fmtTime, matchSearch } from "../utils";
+ import CoverImg from "../components/CoverImg";
++import { useDragSelect } from "../components/useDragSelect";
+ import Modal from "../components/Modal";
+ import type { PlaylistEntryMeta } from "../types";
+ 
+@@ -95,6 +96,17 @@ type DetailRow =
+       cover: string;
+       durationMs: number;
+       liked: boolean;
++    }
++  | {
++      entry: PlaylistEntryMeta;
++      kind: "baidu";
++      id: string;
++      name: string;
++      artist: string;
++      album: string;
++      cover: string;
++      durationMs: number;
++      liked: boolean;
+     };
+ 
+ export default function PlaylistDetail({ id }: { id: number }) {
+@@ -240,6 +252,14 @@ export default function PlaylistDetail({ id }: { id: number }) {
+             liked: !!savedOnline[`navidrome-${e.onlineId}`],
+           };
+         }
++        if (e.kind === "baidu") {
++          return {
++            ...base,
++            kind: "baidu",
++            id: e.onlineId ?? "",
++            liked: !!savedOnline[`baidu-${e.onlineId}`],
++          };
++        }
+         return {
+           ...base,
+           kind: "qq",
+@@ -249,6 +269,14 @@ export default function PlaylistDetail({ id }: { id: number }) {
+       });
+   }, [pl, tracks, search, savedOnline]);
+ 
++  // 批量管理：按住鼠标拖动即可连续选中（不用一行一行点）
++  const drag = useDragSelect({
++    enabled: batchMode,
++    rowids: useMemo(() => list.map((r) => r.entry.rowid), [list]),
++    sel,
++    setSel,
++  });
++
+   const toggleSel = (rowid: number) => {
+     setSel((prev) => {
+       const next = new Set(prev);
+@@ -664,8 +692,11 @@ export default function PlaylistDetail({ id }: { id: number }) {
+                         isSelected ? "checked" : active ? "active" : ""
+                       } ${dead ? "opacity-45" : ""}`}
+                     title={dead ? `无法播放：${unavailable[`${r.kind}:${r.id}`]}` : undefined}
++                    onMouseDown={(ev) => drag.onRowMouseDown(r.entry.rowid, ev)}
++                    onMouseEnter={() => drag.onRowEnter(r.entry.rowid)}
+                     onClick={() => {
+-                      if (batchMode) toggleSel(r.entry.rowid);
++                      // 批量模式下由 onMouseDown 处理（拖动多选），这里不再重复切换
++                      if (batchMode) return;
+                     }}
+                     onDoubleClick={() => {
+                       if (!batchMode) playEntries(list.map((x) => x.entry), i);
+@@ -755,7 +786,9 @@ export default function PlaylistDetail({ id }: { id: number }) {
+                                     ? "B站"
+                                     : r.kind === "navidrome"
+                                       ? "Navidrome"
+-                                      : "QQ音乐"}
++                                      : r.kind === "baidu"
++                                        ? "百度网盘"
++                                        : "QQ音乐"}
+                             </span>
+                           )}
+                           {r.kind !== "track" && r.entry.vip && !dead && (
+diff --git a/src/views/PlaylistDetail.standard.tsx b/src/views/PlaylistDetail.standard.tsx
+index c2ac6d1..624bf49 100644
+--- a/src/views/PlaylistDetail.standard.tsx
++++ b/src/views/PlaylistDetail.standard.tsx
+@@ -26,6 +26,7 @@ import LocateCurrentPill from "../components/LocateCurrentPill";
+ import { useLocatePill } from "../hooks/useLocatePill";
+ import { clampMenuPos, fmtTime, matchSearch } from "../utils";
+ import CoverImg from "../components/CoverImg";
++import { useDragSelect } from "../components/useDragSelect";
+ import Modal from "../components/Modal";
+ import type { PlaylistEntryMeta } from "../types";
+ 
+@@ -95,6 +96,17 @@ type DetailRow =
+       cover: string;
+       durationMs: number;
+       liked: boolean;
++    }
++  | {
++      entry: PlaylistEntryMeta;
++      kind: "baidu";
++      id: string;
++      name: string;
++      artist: string;
++      album: string;
++      cover: string;
++      durationMs: number;
++      liked: boolean;
+     };
+ 
+ export default function PlaylistDetail({ id }: { id: number }) {
+@@ -240,6 +252,14 @@ export default function PlaylistDetail({ id }: { id: number }) {
+             liked: !!savedOnline[`navidrome-${e.onlineId}`],
+           };
+         }
++        if (e.kind === "baidu") {
++          return {
++            ...base,
++            kind: "baidu",
++            id: e.onlineId ?? "",
++            liked: !!savedOnline[`baidu-${e.onlineId}`],
++          };
++        }
+         return {
+           ...base,
+           kind: "qq",
+@@ -249,6 +269,14 @@ export default function PlaylistDetail({ id }: { id: number }) {
+       });
+   }, [pl, tracks, search, savedOnline]);
+ 
++  // 批量管理：按住鼠标拖动即可连续选中（不用一行一行点）
++  const drag = useDragSelect({
++    enabled: batchMode,
++    rowids: useMemo(() => list.map((r) => r.entry.rowid), [list]),
++    sel,
++    setSel,
++  });
++
+   const toggleSel = (rowid: number) => {
+     setSel((prev) => {
+       const next = new Set(prev);
+@@ -668,8 +696,11 @@ export default function PlaylistDetail({ id }: { id: number }) {
+                             : "hover:bg-[var(--shade-hover)]"
+                       } ${dead ? "opacity-45" : ""}`}
+                     title={dead ? `无法播放：${unavailable[`${r.kind}:${r.id}`]}` : undefined}
++                    onMouseDown={(ev) => drag.onRowMouseDown(r.entry.rowid, ev)}
++                    onMouseEnter={() => drag.onRowEnter(r.entry.rowid)}
+                     onClick={() => {
+-                      if (batchMode) toggleSel(r.entry.rowid);
++                      // 批量模式下由 onMouseDown 处理（拖动多选），这里不再重复切换
++                      if (batchMode) return;
+                     }}
+                     onDoubleClick={() => {
+                       if (!batchMode) playEntries(list.map((x) => x.entry), i);
+@@ -759,7 +790,9 @@ export default function PlaylistDetail({ id }: { id: number }) {
+                                     ? "B站"
+                                     : r.kind === "navidrome"
+                                       ? "Navidrome"
+-                                      : "QQ音乐"}
++                                      : r.kind === "baidu"
++                                        ? "百度网盘"
++                                        : "QQ音乐"}
+                             </span>
+                           )}
+                           {r.kind !== "track" && r.entry.vip && !dead && (
 diff --git a/src/views/SettingsView.liquid.tsx b/src/views/SettingsView.liquid.tsx
 index 52109f0..9c9f39a 100644
 --- a/src/views/SettingsView.liquid.tsx
